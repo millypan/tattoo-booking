@@ -77,6 +77,13 @@ export default function AdminPage() {
     setCheckingAuth(false);
   }
 
+  // 密碼改完之後（見 PasswordSection）要立即同步本機存的 adminKey，
+  // 不然下一次 apiFetch 還是帶舊密碼、馬上被 401 踢出去。
+  const updateStoredAdminKey = useCallback((next) => {
+    window.localStorage.setItem(STORAGE_KEY, next);
+    setAdminKey(next);
+  }, []);
+
   if (adminKey === null) return null; // 讀 localStorage 前先不畫畫面，避免密碼框閃一下又消失
 
   if (!authed) {
@@ -84,6 +91,7 @@ export default function AdminPage() {
       <>
         <AdminStyles />
         <div className="gate">
+          <BackLink />
           <h1 className="serif">米粒的時段管理</h1>
           <form onSubmit={submitPassword}>
             <div className="field">
@@ -110,8 +118,19 @@ export default function AdminPage() {
   return (
     <>
       <AdminStyles />
-      <AdminPanel apiFetch={apiFetch} />
+      <AdminPanel apiFetch={apiFetch} adminKey={adminKey} onAdminKeyChange={updateStoredAdminKey} />
     </>
+  );
+}
+
+// 頁面頂部「回預約網站」連結；登入前、登入後兩種畫面都要顯示，用純 <a> 避免額外引入 next/link 的複雜度
+function BackLink() {
+  return (
+    <p style={{ margin: "0 0 18px" }}>
+      <a href="/" style={{ color: "var(--bone-dim)", fontSize: 13, letterSpacing: ".04em" }}>
+        ← 回預約網站
+      </a>
+    </p>
   );
 }
 
@@ -166,7 +185,7 @@ function AdminStyles() {
   );
 }
 
-function AdminPanel({ apiFetch }) {
+function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
   // 開時段區
   const [weekdays, setWeekdays] = useState(() => new Set());
   const [timeOptions, setTimeOptions] = useState(DEFAULT_TIMES);
@@ -303,6 +322,7 @@ function AdminPanel({ apiFetch }) {
 
   return (
     <div>
+      <BackLink />
       <h1 className="serif" style={{ fontSize: 22, letterSpacing: ".1em", marginBottom: 6 }}>
         米粒的時段管理
       </h1>
@@ -457,6 +477,122 @@ function AdminPanel({ apiFetch }) {
           </div>
         )}
       </section>
+
+      <PasswordSection adminKey={adminKey} onAdminKeyChange={onAdminKeyChange} />
     </div>
+  );
+}
+
+// 更改密碼區塊：預設收合，展開後填舊密碼／新密碼／確認新密碼。
+// 刻意不用外層共用的 apiFetch——apiFetch 收到任何 401 就會清掉本機密鑰、把人踢回登入畫面，
+// 但這裡「舊密碼」欄位打錯本來就該回 401，那只是表單驗證錯誤，不該連帶把已登入的 session 登出。
+// 所以這裡直接用原生 fetch，401 只當一般表單錯誤處理。
+function PasswordSection({ adminKey, onAdminKeyChange }) {
+  const [open, setOpen] = useState(false);
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  function resetFields() {
+    setCurrent("");
+    setNext("");
+    setConfirm("");
+  }
+
+  function toggleOpen() {
+    setOpen((prev) => !prev);
+    setError("");
+    setSuccess("");
+    resetFields();
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    if (next !== confirm) {
+      setError("兩次輸入的新密碼不一致");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/admin/password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
+        body: JSON.stringify({ current, next }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error || "密碼更新失敗，請再試一次");
+      } else {
+        onAdminKeyChange(next); // 立即同步本機密鑰，下一次請求就要用新密碼
+        setSuccess("密碼已更新");
+        resetFields();
+        setOpen(false);
+      }
+    } catch (err) {
+      setError("連線失敗，請再試一次");
+    }
+    setSubmitting(false);
+  }
+
+  return (
+    <section className="admin-section">
+      <h2 className="serif">更改密碼</h2>
+      <p className="hint">密碼也可以直接在 Notion「系統設定」資料庫裡改。</p>
+
+      {!open ? (
+        <button type="button" className="cta ghost" onClick={toggleOpen}>
+          展開更改密碼
+        </button>
+      ) : (
+        <form onSubmit={handleSubmit} style={{ marginTop: 14 }}>
+          <div className="field">
+            <label htmlFor="pw-current">舊密碼</label>
+            <input
+              type="password"
+              id="pw-current"
+              value={current}
+              onChange={(e) => setCurrent(e.target.value)}
+              autoFocus
+              required
+            />
+          </div>
+          <div className="field" style={{ marginTop: 12 }}>
+            <label htmlFor="pw-next">新密碼</label>
+            <input
+              type="password"
+              id="pw-next"
+              value={next}
+              onChange={(e) => setNext(e.target.value)}
+              required
+            />
+          </div>
+          <div className="field" style={{ marginTop: 12 }}>
+            <label htmlFor="pw-confirm">確認新密碼</label>
+            <input
+              type="password"
+              id="pw-confirm"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              required
+            />
+          </div>
+          {error ? <p className="err">{error}</p> : null}
+          <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+            <button className="cta" type="submit" disabled={submitting}>
+              {submitting ? "更新中…" : "更新密碼"}
+            </button>
+            <button type="button" className="cta ghost" onClick={toggleOpen}>
+              取消
+            </button>
+          </div>
+        </form>
+      )}
+      {success ? <p className="hint">{success}</p> : null}
+    </section>
   );
 }

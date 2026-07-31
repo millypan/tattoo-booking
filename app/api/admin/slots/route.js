@@ -1,4 +1,4 @@
-import { getFutureSlots, createSlots, closeSlot } from "../../../../lib/notion";
+import { getFutureSlots, createSlots, closeSlot, getAdminPassword } from "../../../../lib/notion";
 
 // 批次建立可能要逐筆呼叫 Notion API（見 lib/notion.js createSlots），
 // 上限拉到 60 秒讓合法批次（≤60 筆，見下方 MAX_CREATE_SLOTS）有足夠時間跑完。
@@ -8,11 +8,15 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const MAX_CREATE_SLOTS = 60;
 
-// 所有方法都先驗證管理密鑰；ADMIN_SECRET 未設定時一律視為未授權（不可放行）
-function isAuthed(request) {
-  const secret = process.env.ADMIN_SECRET;
-  if (!secret) return false;
-  return request.headers.get("x-admin-key") === secret;
+// 所有方法都先驗證管理密鑰；密碼現在存在 Notion「系統設定」資料庫（getAdminPassword 內建
+// ADMIN_SECRET fallback）。password 為 falsy（null／空字串）時一律視為未授權，
+// 不可寫成單純 header === password 就放行（那樣 header 空字串、密碼也是 null 會誤判相等）。
+async function isAuthed(request) {
+  const password = await getAdminPassword();
+  if (!password) return false;
+  const header = request.headers.get("x-admin-key");
+  if (!header) return false;
+  return header === password;
 }
 
 function unauthorized() {
@@ -20,7 +24,7 @@ function unauthorized() {
 }
 
 export async function GET(request) {
-  if (!isAuthed(request)) return unauthorized();
+  if (!(await isAuthed(request))) return unauthorized();
   try {
     const slots = await getFutureSlots();
     return Response.json(slots);
@@ -31,7 +35,7 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  if (!isAuthed(request)) return unauthorized();
+  if (!(await isAuthed(request))) return unauthorized();
   try {
     const { slots, type } = await request.json();
     if (!Array.isArray(slots) || slots.length === 0) {
@@ -57,7 +61,7 @@ export async function POST(request) {
 }
 
 export async function PATCH(request) {
-  if (!isAuthed(request)) return unauthorized();
+  if (!(await isAuthed(request))) return unauthorized();
   try {
     const { id } = await request.json();
     if (!id) return Response.json({ error: "缺少 id" }, { status: 400 });
