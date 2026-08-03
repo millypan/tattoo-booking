@@ -20,6 +20,19 @@ body{
   font-size:16px;line-height:1.75;
   -webkit-font-smoothing:antialiased;
 }
+body:has(.home-page){
+  --ink:#263d38;
+  --ink-2:#f4eddf;
+  --ink-3:#e8dec9;
+  --bone:#243833;
+  --bone-dim:#6f655a;
+  --line:#cbbda8;
+  --jade:#527762;
+  background-color:#eee5d5;
+  background-image:
+    radial-gradient(circle at 88% 9%,rgba(213,168,61,.2) 0 72px,transparent 73px),
+    linear-gradient(145deg,#f5efe3 0%,#eee4d3 58%,#e5d8c4 100%);
+}
 .serif{font-family:"Songti TC","Noto Serif TC","PMingLiU",Georgia,serif}
 a{color:inherit;text-decoration:none}
 button{font:inherit;cursor:pointer}
