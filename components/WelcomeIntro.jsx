@@ -22,19 +22,23 @@ export default function WelcomeIntro() {
       className={`welcome-intro ${phase === "fade" ? "is-fading" : ""}`}
       role="status"
       aria-live="polite"
-      aria-label="歡迎來到拾光印記所，即將開始你的旅程"
+      aria-label="拾起光陰，刻下印記，即將開始你的旅程"
     >
       <div className="welcome-grain" aria-hidden="true" />
       <div className="welcome-halo" aria-hidden="true">
-        <span className="welcome-star">✦</span>
-        <span className="welcome-diamond" />
+        <span className="welcome-orbit welcome-orbit-star">
+          <span className="welcome-star">✦</span>
+        </span>
+        <span className="welcome-orbit welcome-orbit-diamond">
+          <span className="welcome-diamond" />
+        </span>
       </div>
       <div className="welcome-brand" aria-hidden="true">
         <span className="welcome-brand-cn serif">拾光印記所</span>
         <span className="welcome-brand-en">HALO SIGIL</span>
       </div>
       <p className="welcome-message serif">
-        歡迎來到拾光印記所
+        拾起光陰，刻下印記
         <span>即將開始你的旅程</span>
       </p>
     </div>
