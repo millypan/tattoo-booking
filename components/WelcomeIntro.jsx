@@ -6,8 +6,8 @@ export default function WelcomeIntro() {
   const [phase, setPhase] = useState("show");
 
   useEffect(() => {
-    const fadeTimer = window.setTimeout(() => setPhase("fade"), 1600);
-    const removeTimer = window.setTimeout(() => setPhase("done"), 2150);
+    const fadeTimer = window.setTimeout(() => setPhase("fade"), 1750);
+    const removeTimer = window.setTimeout(() => setPhase("done"), 2350);
 
     return () => {
       window.clearTimeout(fadeTimer);
@@ -24,10 +24,15 @@ export default function WelcomeIntro() {
       aria-live="polite"
       aria-label="歡迎來到拾光印記所，即將開始你的旅程"
     >
-      <div className="welcome-shape welcome-circle" aria-hidden="true" />
-      <div className="welcome-shape welcome-square" aria-hidden="true" />
-      <div className="welcome-shape welcome-line" aria-hidden="true" />
-      <p className="welcome-kicker">HALO SIGIL</p>
+      <div className="welcome-grain" aria-hidden="true" />
+      <div className="welcome-halo" aria-hidden="true">
+        <span className="welcome-star">✦</span>
+        <span className="welcome-diamond" />
+      </div>
+      <div className="welcome-brand" aria-hidden="true">
+        <span className="welcome-brand-cn serif">拾光印記所</span>
+        <span className="welcome-brand-en">HALO SIGIL</span>
+      </div>
       <p className="welcome-message serif">
         歡迎來到拾光印記所
         <span>即將開始你的旅程</span>
