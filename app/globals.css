@@ -148,46 +148,81 @@ footer.site{
 
 .welcome-intro{
   position:fixed;inset:0;z-index:9999;display:grid;place-content:center;
-  padding:28px;background:var(--bone);color:var(--ink);text-align:center;
-  opacity:1;visibility:visible;transition:opacity .5s ease,visibility .5s ease;
+  padding:28px;color:#f2eadc;text-align:center;
+  background:
+    radial-gradient(circle at 50% 45%,rgba(25,92,88,.46) 0%,rgba(8,67,66,.2) 36%,transparent 67%),
+    linear-gradient(145deg,#0a4b4c 0%,#063839 55%,#082828 100%);
+  opacity:1;visibility:visible;transition:opacity .6s ease,visibility .6s ease;
   overflow:hidden;
 }
 .welcome-intro.is-fading{opacity:0;visibility:hidden}
-.welcome-kicker{
-  position:relative;z-index:2;margin:0 0 12px;font-size:11px;font-weight:700;
-  letter-spacing:.42em;color:var(--cinnabar);
+.welcome-grain{
+  position:absolute;inset:-25%;opacity:.28;pointer-events:none;
+  background-image:
+    radial-gradient(circle at 20% 30%,rgba(242,234,220,.15) 0 1px,transparent 1.5px),
+    radial-gradient(circle at 72% 65%,rgba(0,0,0,.28) 0 1px,transparent 1.8px);
+  background-size:31px 31px,47px 47px;
+  animation:grain-drift 2.4s ease-out both;
+}
+.welcome-halo{
+  position:absolute;z-index:1;left:50%;top:46%;width:clamp(250px,36vw,430px);aspect-ratio:1;
+  border:1px solid rgba(242,234,220,.42);border-radius:50%;
+  transform:translate(-50%,-50%);animation:halo-open .9s cubic-bezier(.2,.8,.25,1) both;
+}
+.welcome-halo::before,.welcome-halo::after{
+  content:"";position:absolute;border-radius:50%;border:1px solid rgba(242,234,220,.16);
+}
+.welcome-halo::before{inset:8%;border-left-color:transparent;transform:rotate(21deg)}
+.welcome-halo::after{inset:-8%;border-right-color:transparent;transform:rotate(-17deg)}
+.welcome-star{
+  position:absolute;right:8%;top:7%;font-size:24px;color:#f2eadc;
+  animation:star-pulse .8s .35s ease-out both;
+}
+.welcome-diamond{
+  position:absolute;left:7%;bottom:10%;width:14px;height:14px;background:#d5a83d;
+  transform:rotate(45deg);animation:diamond-pop .65s .25s ease-out both;
+}
+.welcome-brand{
+  position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;
+  margin-bottom:30px;animation:brand-light .85s cubic-bezier(.2,.75,.25,1) both;
+}
+.welcome-brand-cn{
+  font-size:clamp(37px,6vw,72px);font-weight:600;line-height:1.12;letter-spacing:.14em;
+  text-shadow:0 0 28px rgba(242,234,220,.14);
+}
+.welcome-brand-en{
+  margin-top:9px;font-size:clamp(12px,1.5vw,17px);font-weight:600;
+  letter-spacing:.34em;transform:translateX(.17em);
 }
 .welcome-message{
-  position:relative;z-index:2;margin:0;font-size:clamp(25px,4vw,43px);
-  font-weight:600;line-height:1.45;letter-spacing:.08em;
-  animation:welcome-rise .65s cubic-bezier(.22,.9,.35,1) both;
+  position:relative;z-index:2;margin:0;font-size:clamp(16px,2.1vw,22px);
+  font-weight:500;line-height:1.5;letter-spacing:.11em;color:rgba(242,234,220,.88);
+  animation:welcome-rise .7s .28s cubic-bezier(.22,.9,.35,1) both;
 }
-.welcome-message span{display:block;margin-top:7px;font-size:.58em;font-weight:500;letter-spacing:.18em}
-.welcome-shape{position:absolute;display:block}
-.welcome-circle{
-  width:clamp(170px,27vw,360px);aspect-ratio:1;border-radius:50%;
-  background:var(--mustard);left:-7vw;top:-10vw;opacity:.92;
-  animation:shape-enter .75s ease-out both;
-}
-.welcome-square{
-  width:clamp(115px,18vw,250px);aspect-ratio:1;background:var(--jade);
-  right:-4vw;bottom:-5vw;transform:rotate(13deg);opacity:.9;
-  animation:shape-enter .75s .1s ease-out both;
-}
-.welcome-line{
-  width:36vw;max-width:480px;height:12px;background:var(--cinnabar);
-  right:-6vw;top:22%;transform:rotate(-12deg);
-  animation:line-enter .7s .1s ease-out both;
-}
+.welcome-message span{display:block;margin-top:7px;font-size:.68em;font-weight:500;letter-spacing:.2em;color:rgba(242,234,220,.62)}
 @keyframes welcome-rise{
   from{opacity:0;transform:translateY(14px)}
   to{opacity:1;transform:translateY(0)}
 }
-@keyframes shape-enter{
-  from{opacity:0;transform:scale(.75) rotate(0)}
+@keyframes brand-light{
+  from{opacity:0;filter:blur(5px);transform:scale(.96)}
+  to{opacity:1;filter:blur(0);transform:scale(1)}
 }
-@keyframes line-enter{
-  from{opacity:0;transform:translateX(60px) rotate(-12deg)}
+@keyframes halo-open{
+  from{opacity:0;transform:translate(-50%,-50%) scale(.72) rotate(-12deg)}
+  to{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0)}
+}
+@keyframes star-pulse{
+  from{opacity:0;transform:scale(.3) rotate(-35deg)}
+  to{opacity:1;transform:scale(1) rotate(0)}
+}
+@keyframes diamond-pop{
+  from{opacity:0;transform:rotate(45deg) scale(.2)}
+  to{opacity:1;transform:rotate(45deg) scale(1)}
+}
+@keyframes grain-drift{
+  from{opacity:0;transform:translate3d(-1%,1%,0)}
+  to{opacity:.28;transform:translate3d(0,0,0)}
 }
 @media(max-width:640px){
   header.site{align-items:flex-start;padding-top:24px}
@@ -200,6 +235,11 @@ footer.site{
   .hero h1{font-size:26px;margin-right:38px}
   .hero::before{width:29px;height:29px}
   .hero::after{right:27px;top:29px;width:22px;height:22px}
+  .welcome-halo{top:45%;width:min(76vw,320px)}
+  .welcome-brand{margin-bottom:26px}
+  .welcome-brand-cn{font-size:clamp(35px,12vw,48px);letter-spacing:.09em}
+  .welcome-brand-en{font-size:11px;letter-spacing:.3em}
+  .welcome-message{font-size:16px}
 }
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
