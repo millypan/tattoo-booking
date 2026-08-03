@@ -69,7 +69,7 @@ export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
         ) : null}
         <div className="rulebox">
           <p><b>接下來一步：</b>加 LINE 官方帳號，跟米粒說你的稱呼。</p>
-          <p>她會親自看過你選的部位（和試貼照），跟你確認最適合的位置，確定沒問題後把轉帳資訊給你——付總額一半作為定金，入帳後時段正式鎖定、這張圖就是你的了。</p>
+          <p>她會親自看過你選的部位（和試貼照），跟你確認最適合的位置，確定沒問題後把轉帳資訊給你——請於下單當日支付總額 50% 作為定金。入帳後時段正式鎖定，並請於 6 個月內完成作品。</p>
           <p>
             {process.env.NEXT_PUBLIC_LINE_URL ? (
               <a className="cta" href={process.env.NEXT_PUBLIC_LINE_URL} target="_blank" rel="noreferrer">加 LINE 官方帳號</a>
@@ -85,6 +85,27 @@ export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
 
   return (
     <form onSubmit={submit}>
+      <section className="booking-notice" aria-labelledby="claim-notice-title">
+        <p className="booking-notice-kicker">認領前，先讓你知道</p>
+        <h3 id="claim-notice-title" className="serif">喜歡這張圖，就安心把流程看完</h3>
+        <ul className="booking-notice-highlights">
+          <li>每張認領圖只屬於一位客人，認領後不更換主題與內容。</li>
+          <li>定金為總價的 50%，需於下單當日完成匯款。</li>
+          <li>定金入帳後，請於 6 個月內完成作品。</li>
+        </ul>
+        <details className="booking-rules">
+          <summary>查看完整認領與改期規則</summary>
+          <div className="booking-rules-body">
+            <h4>作品與費用</h4>
+            <p>頁面價格為最小建議尺寸、一般部位的基準價格；特殊部位、放大尺寸或需要調整設計時，會由米粒另外確認報價。</p>
+            <p>定金為作品總價的 50%。下單當日完成匯款後，作品與時段才會正式保留；付定後請於 6 個月內完成刺青。</p>
+            <h4>改期與取消</h4>
+            <p>距離刺青日超過 5 日，可免費改期一次。刺青日前 5 日內（包含刺青當日）提出改期、取消、遲到未到，或因個人因素無法施作，定金皆不退還。</p>
+            <h4>施作前提醒</h4>
+            <p>若有可能影響刺青安全的健康狀況、正在使用藥物，或不確定自己是否適合刺青，請在付定前主動告知米粒，一起確認是否適合安排。</p>
+          </div>
+        </details>
+      </section>
       <div className="field">
         <label htmlFor="name">怎麼稱呼你</label>
         <input type="text" id="name" name="name" required maxLength={40} />
@@ -165,6 +186,10 @@ export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
           </div>
         )}
       </div>
+      <label className="rules-check">
+        <input type="checkbox" name="acceptRules" required />
+        <span>我已閱讀並同意認領圖、定金與改期規則。</span>
+      </label>
       {error ? <p className="err">{error}</p> : null}
       <button className="cta" type="submit" disabled={state === "sending"}>
         {state === "sending" ? "送出中…" : "預約這張圖"}
