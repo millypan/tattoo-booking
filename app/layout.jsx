@@ -16,7 +16,7 @@ export default function RootLayout({ children }) {
           <Link href="/">
             <div className="wordmark serif">
               ✧ HALO SIGIL 拾光印記所 ✧
-              <small>米粒 Milly・TAOYUAN TATTOO</small>
+              <small>米粒 Milly．拾起光陰，刻下印記。</small>
             </div>
           </Link>
           <nav className="top">
