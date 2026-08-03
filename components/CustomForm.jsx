@@ -9,8 +9,6 @@ const Body3D = dynamic(() => import("./Body3D"), {
 });
 const PhotoAttach = dynamic(() => import("./PhotoAttach"), { ssr: false });
 
-const STYLES = ["美式傳統", "線條", "水墨", "點刺", "不確定，聊了再說"];
-
 export default function CustomForm() {
   const [state, setState] = useState("form");
   const [error, setError] = useState("");
@@ -34,7 +32,7 @@ export default function CustomForm() {
         name: form.get("name"),
         story: form.get("story"),
         style: form.get("style"),
-        ref: form.get("ref"),
+        ref: null,
         spot: `${spot.region}${spot.note ? `（${spot.note}）` : ""}｜大概尺寸：${form.get("size") || "未填"}`,
         partPhoto,
       }),
@@ -78,20 +76,14 @@ export default function CustomForm() {
         <input type="text" id="name" name="name" required maxLength={40} />
       </div>
       <div className="field">
-        <label htmlFor="story">這個刺青對你來說是什麼？</label>
+        <label htmlFor="story">為什麼想刻下這個印記呢？</label>
         <textarea id="story" name="story" required maxLength={1000}
           placeholder="一段經歷、一個人、一句想記住的話……用你的話說就好" />
       </div>
       <div className="field">
-        <label htmlFor="style">喜歡的風格</label>
-        <select id="style" name="style">
-          {STYLES.map((s) => <option key={s}>{s}</option>)}
-        </select>
-        <div className="hint">在圖庫看到喜歡的感覺，也可以直接寫是哪一張</div>
-      </div>
-      <div className="field">
-        <label htmlFor="ref">參考圖連結（選填）</label>
-        <input type="url" id="ref" name="ref" placeholder="IG／Pinterest 連結，或之後在 LINE 傳給我" />
+        <label htmlFor="style">想用哪種風格呈現這個主題呢？</label>
+        <textarea id="style" name="style" maxLength={300}
+          placeholder="可以描述喜歡的感覺、線條或色彩；還不確定也沒關係，我們可以一起討論" />
       </div>
       <div className="field">
         <label>想刺的部位</label>
@@ -107,7 +99,7 @@ export default function CustomForm() {
         <div className="hint">米粒看得到實際位置和皮膚，評估「能不能做」會快很多。照片送出預約前只留在你手機裡。</div>
       </div>
       <div className="rulebox">
-        <p><b>當面討論怎麼進行：</b>安排在上午，一次約 1 到 1.5 小時。</p>
+        <p><b>當面討論怎麼進行：</b>約 1 小時。</p>
         <p>約討論前會收 <b>1,000 元押金</b>——當天有來且確定要刺，全額折抵刺青費用；聊完決定不刺，全額退回。</p>
         <details className="booking-rules compact">
           <summary>查看諮詢改期與取消規則</summary>
