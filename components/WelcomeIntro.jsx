@@ -6,8 +6,8 @@ export default function WelcomeIntro() {
   const [phase, setPhase] = useState("show");
 
   useEffect(() => {
-    const fadeTimer = window.setTimeout(() => setPhase("fade"), 1750);
-    const removeTimer = window.setTimeout(() => setPhase("done"), 2350);
+    const fadeTimer = window.setTimeout(() => setPhase("fade"), 1000);
+    const removeTimer = window.setTimeout(() => setPhase("done"), 1500);
 
     return () => {
       window.clearTimeout(fadeTimer);
