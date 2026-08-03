@@ -26,7 +26,7 @@ export default async function SeriesPage({ params }) {
           </p>
         </div>
       </div>
-      <div className="grid">
+      <div className="grid series-options">
         {members.map((w) => <WorkCard key={w.id} w={w} />)}
       </div>
     </div>
