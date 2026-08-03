@@ -242,16 +242,16 @@ footer.site{
   position:absolute;border-radius:50%;pointer-events:none;
   animation-name:orbit-clockwise;animation-timing-function:linear;animation-iteration-count:infinite;
 }
-.welcome-orbit-star{inset:-7%;animation-duration:4.2s}
-.welcome-orbit-diamond{inset:8%;animation-duration:3.4s;animation-direction:reverse}
+.welcome-orbit-star{inset:-7%;animation-duration:1.15s}
+.welcome-orbit-diamond{inset:8%;animation-duration:.95s;animation-direction:reverse}
 .welcome-star{
   position:absolute;right:-9px;top:50%;font-size:24px;color:#f2eadc;
   transform:translateY(-50%);
-  animation:star-pulse .8s .35s ease-out both;
+  animation:star-pulse .52s .08s ease-out both;
 }
 .welcome-diamond{
   position:absolute;right:-7px;top:50%;width:14px;height:14px;background:#d5a83d;
-  transform:rotate(45deg);animation:diamond-pop .65s .25s ease-out both;
+  transform:rotate(45deg);animation:diamond-pop .48s .06s ease-out both;
 }
 .welcome-brand{
   position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;
