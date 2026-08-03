@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import SharedBookingRules from "./SharedBookingRules";
+import BookingConsentModal from "./BookingConsentModal";
 
 const Body3D = dynamic(() => import("./Body3D"), {
   ssr: false,
@@ -17,15 +18,22 @@ export default function CustomForm() {
   const [spot, setSpot] = useState(null);
   const [partPhoto, setPartPhoto] = useState(null);
   const [refPhoto, setRefPhoto] = useState(null);
+  const [consentOpen, setConsentOpen] = useState(false);
+  const formRef = useRef(null);
 
-  async function submit(e) {
+  function requestConsent(e) {
     e.preventDefault();
     setError("");
     if (!spot?.region) {
       setError("請先在 3D 人體模型上點選想刺的位置");
       return;
     }
-    const form = new FormData(e.target);
+    setConsentOpen(true);
+  }
+
+  async function submit() {
+    setConsentOpen(false);
+    const form = new FormData(formRef.current);
     setState("sending");
     const res = await fetch("/api/custom", {
       method: "POST",
@@ -73,7 +81,7 @@ export default function CustomForm() {
   }
 
   return (
-    <form style={{ maxWidth: "36em" }} onSubmit={submit}>
+    <form ref={formRef} style={{ maxWidth: "36em" }} onSubmit={requestConsent}>
       <div className="field">
         <label htmlFor="name">怎麼稱呼你</label>
         <input type="text" id="name" name="name" required maxLength={40} />
@@ -131,14 +139,16 @@ export default function CustomForm() {
           </div>
         </details>
       </div>
-      <label className="rules-check">
-        <input type="checkbox" name="acceptRules" required />
-        <span>我已閱讀並同意諮詢押金與改期規則。</span>
-      </label>
       {error ? <p className="err">{error}</p> : null}
       <button className="cta" type="submit" disabled={state === "sending"}>
         {state === "sending" ? "送出中…" : "送出想法"}
       </button>
+      <BookingConsentModal
+        open={consentOpen}
+        type="custom"
+        onClose={() => setConsentOpen(false)}
+        onConfirm={submit}
+      />
     </form>
   );
 }
