@@ -4,7 +4,7 @@ export const metadata = { title: "客製刺青｜HALO SIGIL 拾光印記所" };
 
 export default function CustomPage() {
   return (
-    <>
+    <div className="public-page custom-page">
       <section className="hero">
         <h1 className="serif">你想在身上留下什麼故事？</h1>
         <p>
@@ -13,6 +13,6 @@ export default function CustomPage() {
         </p>
       </section>
       <CustomForm />
-    </>
+    </div>
   );
 }
