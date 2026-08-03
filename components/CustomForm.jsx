@@ -15,6 +15,7 @@ export default function CustomForm() {
   const [state, setState] = useState("form");
   const [error, setError] = useState("");
   const [name, setName] = useState("");
+  const [projectType, setProjectType] = useState("");
   const [spot, setSpot] = useState(null);
   const [partPhoto, setPartPhoto] = useState(null);
   const [refPhoto, setRefPhoto] = useState(null);
@@ -26,6 +27,10 @@ export default function CustomForm() {
     setError("");
     if (!spot?.region) {
       setError("請先在 3D 人體模型上點選想刺的位置");
+      return;
+    }
+    if (projectType !== "全新客製" && !partPhoto) {
+      setError("舊圖修改、延伸或改蓋，需要先上傳目前刺青的清楚照片");
       return;
     }
     setConsentOpen(true);
@@ -40,6 +45,7 @@ export default function CustomForm() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: form.get("name"),
+        projectType: form.get("projectType"),
         story: form.get("story"),
         style: form.get("style"),
         ref: form.get("ref"),
@@ -61,12 +67,12 @@ export default function CustomForm() {
     return (
       <div className="done">
         <div className="stamp serif">收</div>
-        <h2 className="serif">想法收到了</h2>
-        <p>{name}，你的想法我看得到了。我會盡快回覆你能不能做，可以的話同時跟你約討論時間。</p>
+        <h2 className="serif">初步評估資料收到了</h2>
+        <p>{name}，我會先確認風格、部位與圖面是否適合施作。這一步還不是正式預約，也不需要付款。</p>
         <div className="rulebox">
           <p><b>記得加 LINE 官方帳號</b>——回覆會從那裡找你。</p>
-          <p>米粒會親自讀過你寫的故事，在 LINE 上跟你聊聊可行的方向。</p>
-          <p>約定討論時段前需付 1,000 元押金：當天有來且確定要刺，全額折抵刺青費用；討論完決定不刺，全額退回。放心來聊。</p>
+          <p>我會親自讀過你寫的故事；確認適合承接後，再和你安排諮詢時間。</p>
+          <p>選定諮詢時段後才需要支付 1,000 元押金。若需要調整方向，或不建議直接修改舊圖，我也會先說明原因。</p>
           <p>
             {process.env.NEXT_PUBLIC_LINE_URL ? (
               <a className="cta" href={process.env.NEXT_PUBLIC_LINE_URL} target="_blank" rel="noreferrer">加 LINE 官方帳號</a>
@@ -85,6 +91,18 @@ export default function CustomForm() {
       <div className="field">
         <label htmlFor="name">怎麼稱呼你</label>
         <input type="text" id="name" name="name" required maxLength={40} />
+      </div>
+      <div className="field">
+        <label htmlFor="projectType">這次想討論的是？</label>
+        <select id="projectType" name="projectType" required value={projectType} onChange={(e) => setProjectType(e.target.value)}>
+          <option value="">請選擇</option>
+          <option value="全新客製">全新客製</option>
+          <option value="舊刺青修改／延伸">舊刺青修改／延伸</option>
+          <option value="舊刺青改蓋">舊刺青改蓋</option>
+        </select>
+        {projectType && projectType !== "全新客製" ? (
+          <div className="hint">舊圖會依現況、深淺、位置與可用空間評估；不一定適合直接修改，也可能建議調整方向或暫不施作。</div>
+        ) : null}
       </div>
       <div className="field">
         <label htmlFor="story">為什麼想刻下這個印記呢？</label>
@@ -116,13 +134,17 @@ export default function CustomForm() {
         <input type="text" id="size" name="size" placeholder="例：約 10 公分" maxLength={40} />
       </div>
       <div className="field">
-        <label>拍一張想刺的部位（選用，但很推薦）</label>
+        <label>{projectType && projectType !== "全新客製" ? "上傳舊刺青目前的清楚照片（必填）" : "拍一張想刺的部位（選用，但很推薦）"}</label>
         <PhotoAttach value={partPhoto} onChange={setPartPhoto} />
-        <div className="hint">也能讓米粒在討論前，多準備幾個適合這個部位的構圖方向，和你一起討論。</div>
+        <div className="hint">
+          {projectType && projectType !== "全新客製"
+            ? "請在光線充足、對焦清楚的情況下，完整拍到原圖與周圍皮膚。"
+            : "也能讓米粒在討論前，多準備幾個適合這個部位的構圖方向，和你一起討論。"}
+        </div>
       </div>
       <div className="rulebox">
-        <p><b>當面討論怎麼進行：</b>約 1 小時。</p>
-        <p>約討論前會收 <b>1,000 元押金</b>——當天有來且確定要刺，全額折抵刺青費用；討論完決定不刺，全額退回。</p>
+        <p><b>這一步是初步評估：</b>送出後不會直接成立預約，也不需要付款。</p>
+        <p>確認適合承接後，才會安排約 1 小時的當面諮詢；選定時段後收取 <b>1,000 元押金</b>。</p>
         <details className="booking-rules compact">
           <summary>查看諮詢改期與取消規則</summary>
           <div className="booking-rules-body">
@@ -141,7 +163,7 @@ export default function CustomForm() {
       </div>
       {error ? <p className="err">{error}</p> : null}
       <button className="cta" type="submit" disabled={state === "sending"}>
-        {state === "sending" ? "送出中…" : "送出想法"}
+        {state === "sending" ? "送出中…" : "送出初步評估"}
       </button>
       <BookingConsentModal
         open={consentOpen}
