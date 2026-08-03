@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import SharedBookingRules from "./SharedBookingRules";
+import BookingConsentModal from "./BookingConsentModal";
 
 const Body3D = dynamic(() => import("./Body3D"), {
   ssr: false,
@@ -19,11 +20,13 @@ export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
   const [state, setState] = useState("form"); // form | sending | done
   const [error, setError] = useState("");
   const [doneMsg, setDoneMsg] = useState("");
+  const [consentOpen, setConsentOpen] = useState(false);
+  const formRef = useRef(null);
 
   // 圖檔約定：第 1 張＝展示圖；第 2 張＝去背圖（試貼用）。
   const tryOnImgIndex = imageCount > 1 ? 1 : 0;
 
-  async function submit(e) {
+  function requestConsent(e) {
     e.preventDefault();
     setError("");
     if (!spot?.region) {
@@ -34,7 +37,12 @@ export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
       setError("請先選一個時段");
       return;
     }
-    const form = new FormData(e.target);
+    setConsentOpen(true);
+  }
+
+  async function submit() {
+    setConsentOpen(false);
+    const form = new FormData(formRef.current);
     setState("sending");
     const res = await fetch("/api/claim", {
       method: "POST",
@@ -85,7 +93,7 @@ export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
   }
 
   return (
-    <form onSubmit={submit}>
+    <form ref={formRef} onSubmit={requestConsent}>
       <section className="booking-notice" aria-labelledby="claim-notice-title">
         <p className="booking-notice-kicker">認領前，先讓你知道</p>
         <h3 id="claim-notice-title" className="serif">喜歡這張圖，就安心把流程看完</h3>
@@ -191,14 +199,16 @@ export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
           </div>
         )}
       </div>
-      <label className="rules-check">
-        <input type="checkbox" name="acceptRules" required />
-        <span>我已閱讀並同意認領圖、定金與改期規則。</span>
-      </label>
       {error ? <p className="err">{error}</p> : null}
       <button className="cta" type="submit" disabled={state === "sending"}>
         {state === "sending" ? "送出中…" : "預約這張圖"}
       </button>
+      <BookingConsentModal
+        open={consentOpen}
+        type="claim"
+        onClose={() => setConsentOpen(false)}
+        onConfirm={submit}
+      />
     </form>
   );
 }
