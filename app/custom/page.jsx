@@ -6,10 +6,9 @@ export default function CustomPage() {
   return (
     <div className="public-page custom-page">
       <section className="hero">
-        <h1 className="serif">你想在身上留下什麼故事？</h1>
+        <h1 className="serif">你想留下什麼故事呢？</h1>
         <p>
-          先用幾分鐘告訴我你的想法，我確認能不能做之後，會約你當面聊——
-          當天現場畫出八成草稿、直接報價。想法越具體，我們見面聊得越快。
+          簡單描述你的想法，讓我們之後的溝通更有效率。諮詢當天，我會畫出約八成的草圖，讓你看見完整的構圖、色系與報價。
         </p>
       </section>
       <CustomForm />
