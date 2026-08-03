@@ -19,7 +19,7 @@ export async function POST(req) {
     await createCustomBooking({
       name: name.trim().slice(0, 40),
       story: story.trim().slice(0, 1000),
-      style: (style || "").slice(0, 30),
+      style: (style || "").slice(0, 300),
       ref: refUrl || null,
       spot: spot.trim().slice(0, 100),
       partPhotoUploadId,
