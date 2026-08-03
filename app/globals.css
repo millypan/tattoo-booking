@@ -13,7 +13,9 @@
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
-  background:var(--ink);color:var(--bone);
+  background-color:var(--ink);
+  background-image:linear-gradient(180deg,#0d2928 0,#111a18 210px,var(--ink) 500px);
+  background-attachment:fixed;color:var(--bone);
   font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
   font-size:16px;line-height:1.75;
   -webkit-font-smoothing:antialiased;
@@ -174,12 +176,19 @@ footer.site{
 }
 .welcome-halo::before{inset:8%;border-left-color:transparent;transform:rotate(21deg)}
 .welcome-halo::after{inset:-8%;border-right-color:transparent;transform:rotate(-17deg)}
+.welcome-orbit{
+  position:absolute;border-radius:50%;pointer-events:none;
+  animation-name:orbit-clockwise;animation-timing-function:linear;animation-iteration-count:infinite;
+}
+.welcome-orbit-star{inset:-7%;animation-duration:4.2s}
+.welcome-orbit-diamond{inset:8%;animation-duration:3.4s;animation-direction:reverse}
 .welcome-star{
-  position:absolute;right:8%;top:7%;font-size:24px;color:#f2eadc;
+  position:absolute;right:-9px;top:50%;font-size:24px;color:#f2eadc;
+  transform:translateY(-50%);
   animation:star-pulse .8s .35s ease-out both;
 }
 .welcome-diamond{
-  position:absolute;left:7%;bottom:10%;width:14px;height:14px;background:#d5a83d;
+  position:absolute;right:-7px;top:50%;width:14px;height:14px;background:#d5a83d;
   transform:rotate(45deg);animation:diamond-pop .65s .25s ease-out both;
 }
 .welcome-brand{
@@ -212,13 +221,17 @@ footer.site{
   from{opacity:0;transform:translate(-50%,-50%) scale(.72) rotate(-12deg)}
   to{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0)}
 }
+@keyframes orbit-clockwise{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
 @keyframes star-pulse{
-  from{opacity:0;transform:scale(.3) rotate(-35deg)}
-  to{opacity:1;transform:scale(1) rotate(0)}
+  from{opacity:0;transform:translateY(-50%) scale(.3) rotate(-35deg)}
+  to{opacity:1;transform:translateY(-50%) scale(1) rotate(0)}
 }
 @keyframes diamond-pop{
-  from{opacity:0;transform:rotate(45deg) scale(.2)}
-  to{opacity:1;transform:rotate(45deg) scale(1)}
+  from{opacity:0;transform:translateY(-50%) rotate(45deg) scale(.2)}
+  to{opacity:1;transform:translateY(-50%) rotate(45deg) scale(1)}
 }
 @keyframes grain-drift{
   from{opacity:0;transform:translate3d(-1%,1%,0)}
