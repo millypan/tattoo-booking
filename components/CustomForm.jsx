@@ -109,7 +109,19 @@ export default function CustomForm() {
       <div className="rulebox">
         <p><b>當面討論怎麼進行：</b>安排在上午，一次約 1 到 1.5 小時。</p>
         <p>約討論前會收 <b>1,000 元押金</b>——當天有來且確定要刺，全額折抵刺青費用；聊完決定不刺，全額退回。</p>
+        <details className="booking-rules compact">
+          <summary>查看諮詢改期與取消規則</summary>
+          <div className="booking-rules-body">
+            <p>距離諮詢日超過 5 日，可免費改期一次；若選擇取消，退回 950 元。</p>
+            <p>諮詢日前 5 日內（包含諮詢當日）提出改期、取消、遲到未到，或因其他個人因素無法出席，1,000 元押金皆不退還。</p>
+            <p>若有如期到場完成諮詢，最後決定不刺，1,000 元押金仍會全額退回。</p>
+          </div>
+        </details>
       </div>
+      <label className="rules-check">
+        <input type="checkbox" name="acceptRules" required />
+        <span>我已閱讀並同意諮詢押金與改期規則。</span>
+      </label>
       {error ? <p className="err">{error}</p> : null}
       <button className="cta" type="submit" disabled={state === "sending"}>
         {state === "sending" ? "送出中…" : "送出想法"}
