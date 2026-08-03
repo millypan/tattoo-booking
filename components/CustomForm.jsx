@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import SharedBookingRules from "./SharedBookingRules";
 
 const Body3D = dynamic(() => import("./Body3D"), {
   ssr: false,
@@ -119,7 +120,14 @@ export default function CustomForm() {
           <div className="booking-rules-body">
             <p>諮詢日前 5 日，可免費改期一次；若選擇取消，退回 950 元。</p>
             <p>諮詢日前 5 日內（包含諮詢當日）提出改期、取消、遲到未到，或因其他個人因素無法出席，1,000 元押金皆不退還。</p>
+            <p>諮詢或刺青當日遲到超過 30 分鐘，將視同取消，押金或定金不退。</p>
             <p>若有如期到場完成諮詢，最後決定不刺，1,000 元押金仍會全額退回。</p>
+            <h4>草圖與設計流程</h4>
+            <p>客製作品無法在討論當天直接刺青。請先準備主題、風格、尺寸、部位、文字或字體及參考圖片，讓當天的溝通更完整。</p>
+            <p>草圖僅於諮詢現場提供約八成版本討論，不提供電子檔，也不開放拍攝；最終定稿會在刺青當天一起確認。</p>
+            <p>討論完確認施作後，原 1,000 元押金會全額折抵刺青費，並於下單當日補足至總價 50% 作為定金。</p>
+            <p>作品會依米粒的創作風格與你的故事設計，不接受與他人完全相同的圖案。</p>
+            <SharedBookingRules />
           </div>
         </details>
       </div>
