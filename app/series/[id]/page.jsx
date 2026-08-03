@@ -13,7 +13,7 @@ export default async function SeriesPage({ params }) {
   return (
     <div className="public-page claim-page">
       <Link className="back" href="/">← 回圖庫</Link>
-      <div className="detail" style={{ marginBottom: 36 }}>
+      <div className="detail series-detail" style={{ marginBottom: 36 }}>
         <div className="art">
           {series.cover ? <img src={series.cover} alt={series.name} /> : null}
         </div>
