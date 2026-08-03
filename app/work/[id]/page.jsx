@@ -30,6 +30,9 @@ export default async function WorkPage({ params }) {
         </div>
         <div>
           <h2 className="serif">{work.name}</h2>
+          {work.description ? (
+            <p className="work-description">{work.description}</p>
+          ) : null}
           <ul className="facts">
             <li><span>價格</span><b>{work.price != null ? `NT$ ${work.price.toLocaleString()}` : "詢價"}</b></li>
             <li><span>最小建議尺寸</span><b>{work.size || "—"}</b></li>
