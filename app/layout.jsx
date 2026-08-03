@@ -1,6 +1,7 @@
 import "./globals.css";
 import Link from "next/link";
 import WelcomeIntro from "../components/WelcomeIntro";
+import ActiveNav from "../components/ActiveNav";
 
 export const metadata = {
   title: "HALO SIGIL 拾光印記所｜米粒刺青預約",
@@ -19,10 +20,7 @@ export default function RootLayout({ children }) {
               <small>米粒 Milly．拾起光陰，刻下印記。</small>
             </div>
           </Link>
-          <nav className="top">
-            <Link href="/" className="on">認領圖</Link>
-            <Link href="/custom">客製刺青</Link>
-          </nav>
+          <ActiveNav />
         </header>
         <main>{children}</main>
         <footer className="site">
