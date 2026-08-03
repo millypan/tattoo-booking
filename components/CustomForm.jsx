@@ -15,6 +15,7 @@ export default function CustomForm() {
   const [name, setName] = useState("");
   const [spot, setSpot] = useState(null);
   const [partPhoto, setPartPhoto] = useState(null);
+  const [refPhoto, setRefPhoto] = useState(null);
 
   async function submit(e) {
     e.preventDefault();
@@ -32,7 +33,8 @@ export default function CustomForm() {
         name: form.get("name"),
         story: form.get("story"),
         style: form.get("style"),
-        ref: null,
+        ref: form.get("ref"),
+        refPhoto,
         spot: `${spot.region}${spot.note ? `（${spot.note}）` : ""}｜大概尺寸：${form.get("size") || "未填"}`,
         partPhoto,
       }),
@@ -55,7 +57,7 @@ export default function CustomForm() {
         <div className="rulebox">
           <p><b>記得加 LINE 官方帳號</b>——回覆會從那裡找你。</p>
           <p>米粒會親自讀過你寫的故事，在 LINE 上跟你聊聊可行的方向。</p>
-          <p>約定討論時段前需付 1,000 元押金：當天有來且確定要刺，全額折抵刺青費用；聊完決定不刺，全額退回。放心來聊。</p>
+          <p>約定討論時段前需付 1,000 元押金：當天有來且確定要刺，全額折抵刺青費用；討論完決定不刺，全額退回。放心來聊。</p>
           <p>
             {process.env.NEXT_PUBLIC_LINE_URL ? (
               <a className="cta" href={process.env.NEXT_PUBLIC_LINE_URL} target="_blank" rel="noreferrer">加 LINE 官方帳號</a>
@@ -83,7 +85,18 @@ export default function CustomForm() {
       <div className="field">
         <label htmlFor="style">想用哪種風格呈現這個主題呢？</label>
         <textarea id="style" name="style" maxLength={300}
-          placeholder="可以描述喜歡的感覺、線條或色彩；還不確定也沒關係，我們可以一起討論" />
+          placeholder="可以描述喜歡的感覺、線條或色彩，也可以在下方貼上參考網址或上傳圖片" />
+        <input type="url" id="ref" name="ref" placeholder="貼上 IG／Pinterest 等參考網址（選填）" />
+        <div style={{ marginTop: 10 }}>
+          <PhotoAttach
+            value={refPhoto}
+            onChange={setRefPhoto}
+            label="上傳風格參考圖片"
+            previewAlt="風格參考圖片"
+            attachedHint="這張會和你的風格想法一起附進預約單。"
+            capture={undefined}
+          />
+        </div>
       </div>
       <div className="field">
         <label>想刺的部位</label>
@@ -96,15 +109,15 @@ export default function CustomForm() {
       <div className="field">
         <label>拍一張想刺的部位（選用，但很推薦）</label>
         <PhotoAttach value={partPhoto} onChange={setPartPhoto} />
-        <div className="hint">米粒看得到實際位置和皮膚，評估「能不能做」會快很多。照片送出預約前只留在你手機裡。</div>
+        <div className="hint">也能讓米粒在討論前，多準備幾個適合這個部位的構圖方向，和你一起討論。</div>
       </div>
       <div className="rulebox">
         <p><b>當面討論怎麼進行：</b>約 1 小時。</p>
-        <p>約討論前會收 <b>1,000 元押金</b>——當天有來且確定要刺，全額折抵刺青費用；聊完決定不刺，全額退回。</p>
+        <p>約討論前會收 <b>1,000 元押金</b>——當天有來且確定要刺，全額折抵刺青費用；討論完決定不刺，全額退回。</p>
         <details className="booking-rules compact">
           <summary>查看諮詢改期與取消規則</summary>
           <div className="booking-rules-body">
-            <p>距離諮詢日超過 5 日，可免費改期一次；若選擇取消，退回 950 元。</p>
+            <p>諮詢日前 5 日，可免費改期一次；若選擇取消，退回 950 元。</p>
             <p>諮詢日前 5 日內（包含諮詢當日）提出改期、取消、遲到未到，或因其他個人因素無法出席，1,000 元押金皆不退還。</p>
             <p>若有如期到場完成諮詢，最後決定不刺，1,000 元押金仍會全額退回。</p>
           </div>
