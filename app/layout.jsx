@@ -24,8 +24,7 @@ export default function RootLayout({ children }) {
         </header>
         <main>{children}</main>
         <footer className="site">
-          <span>HALO SIGIL 拾光印記所・桃園</span>
-          <span>諮詢排上午・刺青時長依圖大小另約</span>
+          <span>✧ HALO SIGIL 拾光印記所 ✧・桃園刺青工作室</span>
         </footer>
       </body>
     </html>
