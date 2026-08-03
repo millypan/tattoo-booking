@@ -18,7 +18,7 @@ export default async function Home() {
     .filter((s) => s.total > 0);
 
   return (
-    <>
+    <div className="home-page">
       <section className="hero">
         <h1 className="serif">每張圖，只刺在一個人身上。</h1>
         <p>
@@ -26,6 +26,6 @@ export default async function Home() {
         </p>
       </section>
       <Gallery works={standalone} series={series} />
-    </>
+    </div>
   );
 }
