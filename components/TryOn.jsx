@@ -7,7 +7,7 @@ export default function TryOn({ workId, workName, imgIndex = 0, onUse, onClose }
   const canvasRef = useRef(null);
   const [photo, setPhoto] = useState(null); // HTMLImageElement
   const [design, setDesign] = useState(null);
-  const [t, setT] = useState({ x: 0.5, y: 0.5, scale: 0.35, rot: 0, alpha: 0.9, ink: true });
+  const [t, setT] = useState({ x: 0.5, y: 0.5, scale: 0.35, rot: 0, alpha: 0.9 });
   const pointers = useRef(new Map());
   const gesture = useRef(null);
 
@@ -41,7 +41,7 @@ export default function TryOn({ workId, workName, imgIndex = 0, onUse, onClose }
       ctx.translate(t.x * canvas.width, t.y * canvas.height);
       ctx.rotate(t.rot);
       ctx.globalAlpha = t.alpha;
-      ctx.globalCompositeOperation = t.ink ? "multiply" : "source-over";
+      ctx.globalCompositeOperation = "multiply";
       ctx.drawImage(design, -w / 2, -h / 2, w, h);
       ctx.restore();
     }
@@ -143,15 +143,10 @@ export default function TryOn({ workId, workName, imgIndex = 0, onUse, onClose }
                 onChange={(e) => setT((s) => ({ ...s, rot: +e.target.value }))} />
             </div>
             <div className="field">
-              <label>墨感（讓圖吃進皮膚）</label>
-              <div className="slots" style={{ gridTemplateColumns: "1fr 1fr" }}>
-                <button type="button" className={`slot${t.ink ? " on" : ""}`} onClick={() => setT((s) => ({ ...s, ink: true }))}>墨感</button>
-                <button type="button" className={`slot${!t.ink ? " on" : ""}`} onClick={() => setT((s) => ({ ...s, ink: false }))}>原圖</button>
-              </div>
+              <label>濃淡</label>
               <input type="range" min="0.3" max="1" step="0.02" value={t.alpha}
-                style={{ width: "100%", marginTop: 8 }}
+                style={{ width: "100%" }}
                 onChange={(e) => setT((s) => ({ ...s, alpha: +e.target.value }))} />
-              <div className="hint">下面的桿子調濃淡</div>
             </div>
             <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 6 }}>
               <button
