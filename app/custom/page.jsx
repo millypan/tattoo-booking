@@ -8,7 +8,7 @@ export default function CustomPage() {
       <section className="hero">
         <h1 className="serif">你想留下什麼故事呢？</h1>
         <p>
-          簡單描述你的想法，讓我們之後的溝通更有效率。諮詢當天，我會畫出約八成的草圖，讓你看見完整的構圖、色系與報價。
+          先簡單描述你的想法，我會確認風格、部位與圖面是否適合施作。確認可以承接後，再一起安排諮詢時間。
         </p>
       </section>
       <CustomForm />
