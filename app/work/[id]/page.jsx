@@ -24,7 +24,7 @@ export default async function WorkPage({ params }) {
   return (
     <div className="public-page claim-page">
       <Link className="back" href="/">← 回圖庫</Link>
-      <div className="detail">
+      <div className="detail work-detail">
         <div className="art">
           {work.image ? <img src={work.image} alt={work.name} /> : null}
         </div>
