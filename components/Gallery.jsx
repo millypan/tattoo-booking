@@ -1,5 +1,3 @@
-"use client";
-import { useState } from "react";
 import Link from "next/link";
 
 const STATUS_PILL = {
@@ -56,23 +54,10 @@ function SeriesCard({ s }) {
 }
 
 export default function Gallery({ works, series = [] }) {
-  const styles = ["全部", ...new Set(works.flatMap((w) => w.styles))];
-  const [filter, setFilter] = useState("全部");
-  const list = works.filter((w) => filter === "全部" || w.styles.includes(filter));
-
   return (
-    <>
-      <div className="chips">
-        {styles.map((s) => (
-          <button key={s} className={s === filter ? "on" : ""} onClick={() => setFilter(s)}>
-            {s}
-          </button>
-        ))}
-      </div>
-      <div className="grid">
-        {filter === "全部" ? series.map((s) => <SeriesCard key={s.id} s={s} />) : null}
-        {list.map((w) => <WorkCard key={w.id} w={w} />)}
-      </div>
-    </>
+    <div className="grid">
+      {series.map((s) => <SeriesCard key={s.id} s={s} />)}
+      {works.map((w) => <WorkCard key={w.id} w={w} />)}
+    </div>
   );
 }
