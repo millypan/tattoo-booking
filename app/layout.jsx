@@ -1,5 +1,6 @@
 import "./globals.css";
 import Link from "next/link";
+import WelcomeIntro from "../components/WelcomeIntro";
 
 export const metadata = {
   title: "HALO SIGIL 拾光印記所｜米粒刺青預約",
@@ -10,11 +11,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="zh-Hant">
       <body>
+        <WelcomeIntro />
         <header className="site">
           <Link href="/">
             <div className="wordmark serif">
-              拾光印記所
-              <small>HALO SIGIL・米粒 mly.ink</small>
+              ✧ HALO SIGIL 拾光印記所 ✧
+              <small>米粒 Milly・TAOYUAN TATTOO</small>
             </div>
           </Link>
           <nav className="top">
