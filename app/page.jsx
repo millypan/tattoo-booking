@@ -20,9 +20,9 @@ export default async function Home() {
   return (
     <div className="home-page">
       <section className="hero">
-        <h1 className="serif">每張圖，只刺在一個人身上。</h1>
+        <h1 className="serif">有哪一張圖，剛好讓你停下來？</h1>
         <p>
-          認領即下架。看上哪張，點進去直接預約——不用再私訊來回問「這張還在嗎」。
+          每張認領圖，只會陪伴一個人。喜歡的話，可以點進作品看看細節與可預約時間；完成認領後，作品就會下架。
         </p>
       </section>
       <Gallery works={standalone} series={series} />
