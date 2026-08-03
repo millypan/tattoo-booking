@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import SharedBookingRules from "./SharedBookingRules";
 
 const Body3D = dynamic(() => import("./Body3D"), {
   ssr: false,
@@ -101,8 +102,12 @@ export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
             <p>定金為作品總價的 50%。下單當日完成匯款後，作品與時段才會正式保留；付定後請於 6 個月內完成刺青。</p>
             <h4>改期與取消</h4>
             <p>刺青日前 5 日，可免費改期一次。刺青日前 5 日內（包含刺青當日）提出改期、取消、遲到未到，或因個人因素無法施作，定金皆不退還。</p>
+            <p>諮詢或刺青當日遲到超過 30 分鐘，將視同取消，定金不退。</p>
             <h4>施作前提醒</h4>
-            <p>若有可能影響刺青安全的健康狀況、正在使用藥物，或不確定自己是否適合刺青，請在付定前主動告知米粒，一起確認是否適合安排。</p>
+            <p>當天請先吃飽，並穿著方便露出刺青部位的深色寬鬆衣物。</p>
+            <h4>作品與使用</h4>
+            <p>認領圖只屬於一位客人，不更換原本的主題與內容；作品著作權仍歸米粒所有，刺青費用不包含圖稿授權。</p>
+            <SharedBookingRules />
           </div>
         </details>
       </section>
