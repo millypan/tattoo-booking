@@ -112,6 +112,7 @@ main{max-width:1080px;margin:0 auto;padding:32px 24px 80px}
 .detail{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:36px}
 @media(max-width:720px){.detail{grid-template-columns:1fr}}
 .detail .art{aspect-ratio:1/1;border:1px solid var(--line)}
+.detail.work-detail .art{aspect-ratio:4/5}
 .detail.series-detail .art{aspect-ratio:4/5}
 .detail h2{font-size:26px;margin:0 0 4px;letter-spacing:.12em;font-weight:600}
 .work-description{
@@ -242,16 +243,16 @@ footer.site{
   position:absolute;border-radius:50%;pointer-events:none;
   animation-name:orbit-clockwise;animation-timing-function:linear;animation-iteration-count:infinite;
 }
-.welcome-orbit-star{inset:-7%;animation-duration:1.15s}
-.welcome-orbit-diamond{inset:8%;animation-duration:.95s;animation-direction:reverse}
+.welcome-orbit-star{inset:-7%;animation-duration:4.2s}
+.welcome-orbit-diamond{inset:8%;animation-duration:3.4s;animation-direction:reverse}
 .welcome-star{
   position:absolute;right:-9px;top:50%;font-size:24px;color:#f2eadc;
   transform:translateY(-50%);
-  animation:star-pulse .52s .08s ease-out both;
+  animation:star-pulse .8s .35s ease-out both;
 }
 .welcome-diamond{
   position:absolute;right:-7px;top:50%;width:14px;height:14px;background:#d5a83d;
-  transform:rotate(45deg);animation:diamond-pop .48s .06s ease-out both;
+  transform:rotate(45deg);animation:diamond-pop .65s .25s ease-out both;
 }
 .welcome-brand{
   position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;
