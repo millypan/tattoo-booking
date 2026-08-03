@@ -167,6 +167,25 @@ textarea{min-height:110px;resize:vertical}
 .rules-check{display:flex;align-items:flex-start;gap:10px;margin:20px 0;color:var(--bone);font-size:13px;letter-spacing:.04em;cursor:pointer}
 .rules-check input{width:17px;height:17px;margin:4px 0 0;accent-color:var(--cinnabar);flex:0 0 auto}
 
+.consent-backdrop{
+  position:fixed;inset:0;z-index:9000;display:grid;place-items:center;padding:20px;
+  background:rgba(3,24,24,.82);backdrop-filter:blur(5px);
+}
+.consent-modal{
+  width:min(620px,100%);max-height:min(760px,92vh);overflow:auto;
+  padding:28px;background:var(--ink-2);border:1px solid var(--line);
+  box-shadow:0 24px 80px rgba(0,0,0,.38);
+}
+.consent-modal h3{margin:3px 0 4px;font-size:24px;letter-spacing:.08em}
+.consent-intro{margin:0 0 18px;color:var(--bone-dim);font-size:14px}
+.consent-item{
+  display:flex;align-items:flex-start;gap:12px;margin:0;padding:15px 0;
+  border-top:1px solid var(--line);color:var(--bone);font-size:14px;letter-spacing:.02em;cursor:pointer;
+}
+.consent-item input{width:18px;height:18px;margin:4px 0 0;accent-color:var(--cinnabar);flex:0 0 auto}
+.consent-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:12px}
+.consent-actions .cta{margin-top:0}
+
 .done{max-width:34em;margin:40px auto;text-align:center}
 .done .stamp{
   width:84px;height:84px;margin:0 auto 24px;border:2px solid var(--cinnabar);border-radius:50%;
