@@ -6,6 +6,7 @@ export default function ConsultSlotForm({ token, slots }) {
   const [state, setState] = useState("form");
   const [error, setError] = useState("");
   const [selectedLabel, setSelectedLabel] = useState("");
+  const [copied, setCopied] = useState(false);
 
   async function submit(e) {
     e.preventDefault();
@@ -27,6 +28,17 @@ export default function ConsultSlotForm({ token, slots }) {
     setState("done");
   }
 
+  async function copyLineMessage() {
+    const message = `米粒你好，我已經選好諮詢時間：${selectedLabel}，再麻煩你提供押金資訊，謝謝！`;
+    try {
+      await navigator.clipboard.writeText(message);
+      setCopied(true);
+      setError("");
+    } catch {
+      setError("無法自動複製，請長按下方文字後選擇複製");
+    }
+  }
+
   if (state === "done") {
     return (
       <div className="done consult-done">
@@ -34,8 +46,18 @@ export default function ConsultSlotForm({ token, slots }) {
         <h2 className="serif">時段已為你保留</h2>
         <p className="consult-selected">{selectedLabel}</p>
         <div className="rulebox">
-          <p>接下來請回到原本的 LINE 對話告訴米粒「已選好時段」。</p>
+          <p><b>把這段訊息傳給米粒：</b></p>
+          <p className="consult-line-message">米粒你好，我已經選好諮詢時間：{selectedLabel}，再麻煩你提供押金資訊，謝謝！</p>
           <p>米粒確認後會提供押金資訊；完成 1,000 元押金後，才算正式完成諮詢預約。</p>
+        </div>
+        {error ? <p className="err">{error}</p> : null}
+        <div className="consult-actions">
+          <button className="cta" type="button" onClick={copyLineMessage}>
+            {copied ? "已複製訊息" : "複製訊息"}
+          </button>
+          {process.env.NEXT_PUBLIC_LINE_URL ? (
+            <a className="cta ghost" href={process.env.NEXT_PUBLIC_LINE_URL} target="_blank" rel="noreferrer">回到 LINE</a>
+          ) : null}
         </div>
       </div>
     );
