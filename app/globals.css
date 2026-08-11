@@ -211,12 +211,16 @@ textarea{min-height:110px;resize:vertical}
 .consult-slots{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin:28px 0 14px}
 .consult-slots .slot{cursor:pointer;min-height:52px}
 .consult-selected{text-align:center!important;color:var(--bone)!important;font-size:18px}
+.consult-line-message{padding:12px 14px;border:1px dashed var(--line);color:var(--bone)!important;line-height:1.75;user-select:text}
+.consult-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+.consult-actions .cta{margin-top:0;cursor:pointer}
 
 @media(max-width:560px){
   .consult-page{padding:22px 16px 56px}
   .consult-card{margin:24px auto;padding:24px 18px}
   .consult-slots{grid-template-columns:1fr}
   .consult-card .cta{width:100%;padding-left:12px;padding-right:12px;letter-spacing:.12em}
+  .consult-actions .cta{width:100%}
 }
 
 .err{color:var(--cinnabar);font-size:13px;margin-top:10px}
