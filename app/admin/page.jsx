@@ -398,7 +398,7 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
                   <span className="calendar-date">{Number(date.slice(-2))}</span>
                   {daySlots.slice(0, 3).map((slot) => (
                     <span className="calendar-slot" key={slot.id}>
-                      {slot.type === "諮詢" ? "諮" : "刺"} {slot.start?.includes("T") ? slot.start.slice(11, 16) : "未定"}
+                      {slot.type === "諮詢" ? "諮" : "刺"} {slot.displayTime || "未定"}
                     </span>
                   ))}
                   {daySlots.length > 3 ? <span className="calendar-more">另有 {daySlots.length - 3} 筆</span> : null}
