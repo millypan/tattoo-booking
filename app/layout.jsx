@@ -25,7 +25,6 @@ export default function RootLayout({ children }) {
         <main>{children}</main>
         <footer className="site">
           <span>✧ HALO SIGIL 拾光印記所 ✧・桃園刺青工作室</span>
-          <Link className="admin-link" href="/admin">後臺管理</Link>
         </footer>
       </body>
     </html>
