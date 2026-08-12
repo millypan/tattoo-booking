@@ -3,13 +3,25 @@ import { revalidatePath } from "next/cache";
 
 export async function POST(req) {
   try {
-    const { name, spot, workId, slotId, sizeChoice, tryOn } = await req.json();
-    if (!name?.trim() || !spot?.trim() || !workId) {
+    const { name, spot, workId, slotId, sizeChoice, tryOn, applicationType, coverPhoto } = await req.json();
+    const allowedApplicationTypes = ["正常新刺", "蓋在原有刺青上"];
+    if (!name?.trim() || !spot?.trim() || !workId || !allowedApplicationTypes.includes(applicationType)) {
       return Response.json({ error: "缺少必填欄位" }, { status: 400 });
+    }
+    if (applicationType === "蓋在原有刺青上" && !coverPhoto) {
+      return Response.json({ error: "改蓋案件需要舊刺青照片" }, { status: 400 });
     }
     const work = await getWork(workId);
     if (work.status !== "可認領") {
       return Response.json({ error: "這張圖目前無法認領" }, { status: 409 });
+    }
+    let coverPhotoUploadId = null;
+    if (coverPhoto) {
+      try {
+        coverPhotoUploadId = await uploadDataUrlImage(coverPhoto, "原有刺青照片.jpg");
+      } catch (e) {
+        console.error("cover photo upload failed", e);
+      }
     }
     let tryOnUploadId = null;
     if (tryOn) {
@@ -24,8 +36,10 @@ export async function POST(req) {
       spot: spot.trim().slice(0, 100),
       sizeChoice: String(sizeChoice || "最小建議尺寸").slice(0, 30),
       tryOnUploadId,
+      coverPhotoUploadId,
+      applicationType,
       workId,
-      slotId: slotId || undefined,
+      slotId: applicationType === "正常新刺" ? (slotId || undefined) : undefined,
     });
     revalidatePath("/");
     revalidatePath(`/work/${workId}`);
