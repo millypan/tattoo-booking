@@ -230,8 +230,6 @@ footer.site{
   padding:26px 24px 40px;font-size:13px;color:var(--bone-dim);
   display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;letter-spacing:.08em;
 }
-footer.site .admin-link{color:var(--bone-dim);opacity:.7;text-decoration:none}
-footer.site .admin-link:hover{color:var(--cinnabar);opacity:1}
 
 .welcome-intro{
   position:fixed;inset:0;z-index:9999;display:grid;place-content:center;
