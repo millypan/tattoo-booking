@@ -2,27 +2,37 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   formatSlotLabel,
-  weekdayOfDateString,
   taipeiTodayDateString,
-  addDaysToDateString,
 } from "../../lib/slotFormat.mjs";
 
 const STORAGE_KEY = "mly_admin_key";
 
-const WEEKDAY_OPTIONS = [
-  { label: "一", value: 1 },
-  { label: "二", value: 2 },
-  { label: "三", value: 3 },
-  { label: "四", value: 4 },
-  { label: "五", value: 5 },
-  { label: "六", value: 6 },
-  { label: "日", value: 0 },
-];
-
 const DEFAULT_TIMES = ["13:00", "15:00", "17:00", "19:00", "21:00"];
-const WEEK_RANGE_OPTIONS = [1, 2, 3, 4];
 const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const MAX_CREATE_SLOTS = 60; // 對應 app/api/admin/slots/route.js 的 MAX_CREATE_SLOTS，超過就擋在預覽階段
+const WEEK_LABELS = ["日", "一", "二", "三", "四", "五", "六"];
+
+function monthKey(dateString) {
+  return dateString.slice(0, 7);
+}
+
+function shiftMonth(key, amount) {
+  const [year, month] = key.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1 + amount, 1));
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+function monthDays(key) {
+  const [year, month] = key.split("-").map(Number);
+  const total = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const firstWeekday = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+  return {
+    year,
+    month,
+    firstWeekday,
+    dates: Array.from({ length: total }, (_, i) => `${key}-${String(i + 1).padStart(2, "0")}`),
+  };
+}
 
 export default function AdminPage() {
   // null=尚未從 localStorage 讀取；""=沒有金鑰；string=有金鑰
@@ -158,6 +168,21 @@ function AdminStyles() {
       .time-add{display:flex;gap:8px;align-items:center;margin-top:8px}
       .time-add input{width:110px}
 
+      .month-picker{max-width:520px;border:1px solid var(--line);padding:14px;margin-top:8px}
+      .month-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+      .month-head strong{font-size:16px;letter-spacing:.08em;font-variant-numeric:tabular-nums}
+      .month-nav{background:none;border:1px solid var(--line);color:var(--bone);padding:6px 12px;border-radius:var(--radius)}
+      .month-nav[disabled]{opacity:.3;cursor:not-allowed}
+      .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+      .calendar-week{font-size:11px;text-align:center;color:var(--bone-dim);padding:4px 0}
+      .calendar-day{aspect-ratio:1;border:1px solid transparent;background:var(--ink-3);color:var(--bone);border-radius:50%;font:inherit;font-size:13px;position:relative}
+      .calendar-day:hover:not([disabled]){border-color:var(--cinnabar)}
+      .calendar-day.on{background:var(--cinnabar);color:#fff}
+      .calendar-day.has-slot:not(.on)::after{content:"";position:absolute;width:4px;height:4px;border-radius:50%;background:var(--jade);bottom:4px;left:50%;transform:translateX(-50%)}
+      .calendar-day[disabled]{opacity:.2;cursor:not-allowed}
+      .calendar-empty{aspect-ratio:1}
+      .calendar-note{font-size:12px;color:var(--bone-dim);margin:10px 0 0}
+
       .preview-list{list-style:none;padding:0;margin:14px 0;border-top:1px solid var(--line)}
       .preview-list li{
         display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);
@@ -187,12 +212,12 @@ function AdminStyles() {
 
 function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
   // 開時段區
-  const [weekdays, setWeekdays] = useState(() => new Set());
   const [timeOptions, setTimeOptions] = useState(DEFAULT_TIMES);
   const [selectedTimes, setSelectedTimes] = useState(() => new Set());
+  const [selectedDates, setSelectedDates] = useState(() => new Set());
+  const [visibleMonth, setVisibleMonth] = useState(() => monthKey(taipeiTodayDateString()));
   const [customTime, setCustomTime] = useState("");
   const [customTimeError, setCustomTimeError] = useState("");
-  const [weeksRange, setWeeksRange] = useState(1);
   const [slotType, setSlotType] = useState("刺青");
   const [creating, setCreating] = useState(false);
   const [createResult, setCreateResult] = useState(null);
@@ -219,8 +244,8 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
     loadFutureSlots();
   }, [loadFutureSlots]);
 
-  function toggleWeekday(v) {
-    setWeekdays((prev) => {
+  function toggleDate(v) {
+    setSelectedDates((prev) => {
       const next = new Set(prev);
       if (next.has(v)) next.delete(v);
       else next.add(v);
@@ -249,18 +274,19 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
     setCustomTime("");
   }
 
-  // 即時預覽：從明天起算 weeksRange×7 天內，篩出符合勾選星期幾的日期 × 勾選時間，依時間升冪排序
-  // 星期幾與日期運算一律走 lib/slotFormat.mjs 的台北時區函式，不用瀏覽器本地時間的 getDay()
+  const calendar = useMemo(() => monthDays(visibleMonth), [visibleMonth]);
+  const currentMonth = monthKey(taipeiTodayDateString());
+  const occupiedDates = useMemo(
+    () => new Set((futureSlots || []).map((slot) => slot.start?.slice(0, 10)).filter(Boolean)),
+    [futureSlots]
+  );
+
+  // 即時預覽：已點選日期 × 已點選時間，依日期時間升冪排序。
   const preview = useMemo(() => {
-    if (weekdays.size === 0 || selectedTimes.size === 0) return [];
-    const today = taipeiTodayDateString();
-    const start = addDaysToDateString(today, 1);
-    const totalDays = weeksRange * 7;
+    if (selectedDates.size === 0 || selectedTimes.size === 0) return [];
     const times = [...selectedTimes].sort();
     const items = [];
-    for (let i = 0; i < totalDays; i++) {
-      const d = addDaysToDateString(start, i);
-      if (!weekdays.has(weekdayOfDateString(d))) continue;
+    for (const d of [...selectedDates].sort()) {
       for (const t of times) {
         const iso = `${d}T${t}:00+08:00`;
         items.push({ date: d, time: t, iso, label: formatSlotLabel(iso) });
@@ -268,7 +294,7 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
     }
     items.sort((a, b) => new Date(a.iso).getTime() - new Date(b.iso).getTime());
     return items;
-  }, [weekdays, selectedTimes, weeksRange]);
+  }, [selectedDates, selectedTimes]);
 
   async function submitCreate() {
     if (preview.length === 0) return;
@@ -331,18 +357,30 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
       <section className="admin-section">
         <h2 className="serif">開時段</h2>
 
-        <h3>星期幾（可複選）</h3>
-        <div className="chips">
-          {WEEKDAY_OPTIONS.map((w) => (
-            <button
-              key={w.value}
-              type="button"
-              className={weekdays.has(w.value) ? "on" : ""}
-              onClick={() => toggleWeekday(w.value)}
-            >
-              週{w.label}
-            </button>
-          ))}
+        <h3>日期（可複選）</h3>
+        <div className="month-picker">
+          <div className="month-head">
+            <button className="month-nav" type="button" disabled={visibleMonth <= currentMonth} onClick={() => setVisibleMonth(shiftMonth(visibleMonth, -1))}>←</button>
+            <strong>{calendar.year} 年 {calendar.month} 月</strong>
+            <button className="month-nav" type="button" onClick={() => setVisibleMonth(shiftMonth(visibleMonth, 1))}>→</button>
+          </div>
+          <div className="calendar-grid">
+            {WEEK_LABELS.map((day) => <div className="calendar-week" key={day}>週{day}</div>)}
+            {Array.from({ length: calendar.firstWeekday }, (_, i) => <div className="calendar-empty" key={`empty-${i}`} />)}
+            {calendar.dates.map((date) => (
+              <button
+                key={date}
+                type="button"
+                className={`calendar-day${selectedDates.has(date) ? " on" : ""}${occupiedDates.has(date) ? " has-slot" : ""}`}
+                disabled={date <= taipeiTodayDateString()}
+                onClick={() => toggleDate(date)}
+                aria-label={`${date}${occupiedDates.has(date) ? "，已有時段" : ""}`}
+              >
+                {Number(date.slice(-2))}
+              </button>
+            ))}
+          </div>
+          <p className="calendar-note">可一次選多天；綠點表示該日已經有開放或保留中的時段。</p>
         </div>
 
         <h3>時間（可複選）</h3>
@@ -370,20 +408,6 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
         </div>
         {customTimeError ? <p className="err">{customTimeError}</p> : null}
 
-        <h3>套用範圍</h3>
-        <div className="chips">
-          {WEEK_RANGE_OPTIONS.map((n) => (
-            <button
-              key={n}
-              type="button"
-              className={weeksRange === n ? "on" : ""}
-              onClick={() => setWeeksRange(n)}
-            >
-              未來 {n} 週
-            </button>
-          ))}
-        </div>
-
         <h3>類型</h3>
         <div className="chips">
           {["刺青", "諮詢"].map((t) => (
@@ -400,7 +424,7 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
 
         <h3>預覽（{preview.length} 個時段）</h3>
         {preview.length === 0 ? (
-          <p className="hint">先勾選星期幾與時間，這裡會列出即將建立的時段。</p>
+          <p className="hint">先在月曆點選日期，再選擇時間，這裡會列出即將建立的時段。</p>
         ) : (
           <ul className="preview-list">
             {preview.map((p) => (
@@ -414,7 +438,7 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
 
         {preview.length > MAX_CREATE_SLOTS ? (
           <p className="err">
-            一次最多開 {MAX_CREATE_SLOTS} 個，目前預覽 {preview.length} 個，請分批（減少勾選的星期/時段/週數）
+            一次最多開 {MAX_CREATE_SLOTS} 個，目前預覽 {preview.length} 個，請減少日期或時間後分批建立。
           </p>
         ) : (
           <button
