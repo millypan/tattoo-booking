@@ -7,7 +7,6 @@ import {
 
 const STORAGE_KEY = "mly_admin_key";
 
-const DEFAULT_TIMES = ["13:00", "15:00", "17:00", "19:00", "21:00"];
 const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const MAX_CREATE_SLOTS = 60; // 對應 app/api/admin/slots/route.js 的 MAX_CREATE_SLOTS，超過就擋在預覽階段
 const WEEK_LABELS = ["日", "一", "二", "三", "四", "五", "六"];
@@ -32,6 +31,12 @@ function monthDays(key) {
     firstWeekday,
     dates: Array.from({ length: total }, (_, i) => `${key}-${String(i + 1).padStart(2, "0")}`),
   };
+}
+
+function defaultEndTime(start, type) {
+  const [hour, minute] = (start || "00:00").split(":").map(Number);
+  const endMinutes = Math.min(hour * 60 + minute + (type === "諮詢" ? 60 : 300), 23 * 60 + 59);
+  return `${String(Math.floor(endMinutes / 60)).padStart(2, "0")}:${String(endMinutes % 60).padStart(2, "0")}`;
 }
 
 export default function AdminPage() {
@@ -165,8 +170,13 @@ function AdminStyles() {
       .admin-section h3{font-size:13px;letter-spacing:.15em;color:var(--bone-dim);margin:20px 0 8px;font-weight:400}
       .admin-section h3:first-of-type{margin-top:0}
 
-      .time-add{display:flex;gap:8px;align-items:center;margin-top:8px}
-      .time-add input{width:110px}
+      .schedule-builder{max-width:780px;border:1px solid var(--line);padding:14px;margin-bottom:20px}
+      .schedule-row{display:grid;grid-template-columns:120px 1fr 18px 1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+      .schedule-row:last-of-type{border-bottom:none}
+      .schedule-row input,.schedule-row select{margin:0;min-width:0}
+      .schedule-dash{text-align:center;color:var(--bone-dim)}
+      .schedule-remove{background:none;border:1px solid var(--line);color:var(--bone-dim);padding:8px 10px;border-radius:var(--radius)}
+      .schedule-add{margin-top:10px;background:none;border:1px solid var(--jade);color:var(--bone);padding:8px 13px;border-radius:var(--radius)}
 
       .month-picker{max-width:780px;border:1px solid var(--line);padding:16px;margin-top:8px}
       .month-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
@@ -190,17 +200,21 @@ function AdminStyles() {
       .calendar-note{font-size:12px;color:var(--bone-dim);margin:10px 0 0}
       .day-manager{max-width:780px;margin:12px 0 22px;border:1px solid var(--line);padding:14px}
       .day-manager h4{margin:0 0 10px;font-size:14px;letter-spacing:.08em}
-      .day-edit-row{display:grid;grid-template-columns:minmax(100px,1fr) minmax(110px,1fr) auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+      .day-edit-row{display:grid;grid-template-columns:minmax(100px,1fr) 18px minmax(100px,1fr) minmax(110px,1fr) auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
       .day-edit-row input,.day-edit-row select{margin:0;min-width:0}
       .day-action{background:none;border:1px solid var(--line);color:var(--bone);padding:8px 11px;border-radius:var(--radius);white-space:nowrap}
       .day-action.save{border-color:var(--jade)}
       .day-action.close:hover{border-color:var(--cinnabar);color:var(--cinnabar)}
 
       @media(max-width:640px){
+        .schedule-row{grid-template-columns:1fr 1fr 1fr auto}
+        .schedule-row select{grid-column:1/-1}
+        .schedule-dash{display:none}
         .month-picker{padding:10px;margin-left:-8px;margin-right:-8px}
         .calendar-grid{grid-template-columns:repeat(7,minmax(68px,1fr))}
         .calendar-day,.calendar-empty{min-height:82px}
-        .day-edit-row{grid-template-columns:1fr 1fr}
+        .day-edit-row{grid-template-columns:1fr 18px 1fr}
+        .day-edit-row select{grid-column:1/-1}
       }
 
       .preview-list{list-style:none;padding:0;margin:14px 0;border-top:1px solid var(--line)}
@@ -232,14 +246,13 @@ function AdminStyles() {
 
 function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
   // 開時段區
-  const [timeOptions, setTimeOptions] = useState(DEFAULT_TIMES);
-  const [selectedTimes, setSelectedTimes] = useState(() => new Set());
+  const [scheduleRows, setScheduleRows] = useState([
+    { id: 1, type: "諮詢", time: "10:00", endTime: "11:00" },
+    { id: 2, type: "刺青", time: "13:00", endTime: "18:00" },
+  ]);
   const [selectedDates, setSelectedDates] = useState(() => new Set());
   const [activeDate, setActiveDate] = useState(null);
   const [visibleMonth, setVisibleMonth] = useState(() => monthKey(taipeiTodayDateString()));
-  const [customTime, setCustomTime] = useState("");
-  const [customTimeError, setCustomTimeError] = useState("");
-  const [slotType, setSlotType] = useState("刺青");
   const [creating, setCreating] = useState(false);
   const [createResult, setCreateResult] = useState(null);
   const [createError, setCreateError] = useState("");
@@ -277,25 +290,12 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
     });
   }
 
-  function toggleTime(t) {
-    setSelectedTimes((prev) => {
-      const next = new Set(prev);
-      if (next.has(t)) next.delete(t);
-      else next.add(t);
-      return next;
-    });
+  function updateScheduleRow(id, field, value) {
+    setScheduleRows((rows) => rows.map((row) => row.id === id ? { ...row, [field]: value } : row));
   }
 
-  function addCustomTime() {
-    const t = customTime.trim();
-    if (!TIME_RE.test(t)) {
-      setCustomTimeError("請輸入 HH:MM 格式，例如 14:30");
-      return;
-    }
-    setCustomTimeError("");
-    setTimeOptions((prev) => (prev.includes(t) ? prev : [...prev, t]));
-    setSelectedTimes((prev) => new Set(prev).add(t));
-    setCustomTime("");
+  function addScheduleRow() {
+    setScheduleRows((rows) => [...rows, { id: Date.now(), type: "諮詢", time: "10:00", endTime: "11:00" }]);
   }
 
   const calendar = useMemo(() => monthDays(visibleMonth), [visibleMonth]);
@@ -312,20 +312,19 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
     [futureSlots]
   );
 
-  // 即時預覽：已點選日期 × 已點選時間，依日期時間升冪排序。
+  // 即時預覽：先設定好的整組排程 × 已點選日期。
   const preview = useMemo(() => {
-    if (selectedDates.size === 0 || selectedTimes.size === 0) return [];
-    const times = [...selectedTimes].sort();
+    if (selectedDates.size === 0 || scheduleRows.length === 0) return [];
     const items = [];
     for (const d of [...selectedDates].sort()) {
-      for (const t of times) {
-        const iso = `${d}T${t}:00+08:00`;
-        items.push({ date: d, time: t, iso, label: formatSlotLabel(iso) });
+      for (const row of scheduleRows) {
+        const iso = `${d}T${row.time}:00+08:00`;
+        items.push({ date: d, time: row.time, endTime: row.endTime, type: row.type, iso, label: formatSlotLabel(iso) });
       }
     }
     items.sort((a, b) => new Date(a.iso).getTime() - new Date(b.iso).getTime());
     return items;
-  }, [selectedDates, selectedTimes]);
+  }, [selectedDates, scheduleRows]);
 
   async function submitCreate() {
     if (preview.length === 0) return;
@@ -337,8 +336,7 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          slots: preview.map(({ date, time }) => ({ date, time })),
-          type: slotType,
+          slots: preview.map(({ date, time, endTime, type }) => ({ date, time, endTime, type })),
         }),
       });
       if (!res.ok) {
@@ -378,23 +376,24 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
   }
 
   function editValue(slot, field) {
-    return slotEdits[slot.id]?.[field] ?? (field === "time" ? (slot.displayTime || "") : slot.type);
+    return slotEdits[slot.id]?.[field] ?? (field === "time" ? (slot.displayTime || "") : field === "endTime" ? (slot.displayEndTime || defaultEndTime(slot.displayTime, slot.type)) : slot.type);
   }
 
   function setEditValue(slot, field, value) {
-    setSlotEdits((prev) => ({ ...prev, [slot.id]: { time: editValue(slot, "time"), type: editValue(slot, "type"), ...prev[slot.id], [field]: value } }));
+    setSlotEdits((prev) => ({ ...prev, [slot.id]: { time: editValue(slot, "time"), endTime: editValue(slot, "endTime"), type: editValue(slot, "type"), ...prev[slot.id], [field]: value } }));
   }
 
   async function saveSlot(slot) {
     const time = editValue(slot, "time");
+    const endTime = editValue(slot, "endTime");
     const type = editValue(slot, "type");
-    if (!TIME_RE.test(time)) return setSlotsError("請輸入正確時間，例如 14:30");
+    if (!TIME_RE.test(time) || !TIME_RE.test(endTime) || endTime <= time) return setSlotsError("請確認開始與結束時間，結束時間必須較晚");
     if (slot.status === "保留中" && !window.confirm("這個時段已有客人保留，確定要更改時間或類型？")) return;
     setSavingId(slot.id); setSlotsError("");
     try {
       const res = await apiFetch("/api/admin/slots", {
         method: "PATCH", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: slot.id, action: "update", date: activeDate, time, type }),
+        body: JSON.stringify({ id: slot.id, action: "update", date: activeDate, time, endTime, type }),
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(body.error || "更新失敗");
@@ -415,7 +414,23 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
       <section className="admin-section">
         <h2 className="serif">開時段</h2>
 
-        <h3>日期（可複選）</h3>
+        <h3>1．先設定要複製的整組排程</h3>
+        <div className="schedule-builder">
+          {scheduleRows.map((row) => (
+            <div className="schedule-row" key={row.id}>
+              <select value={row.type} onChange={(e) => updateScheduleRow(row.id, "type", e.target.value)}>
+                <option>諮詢</option><option>刺青</option>
+              </select>
+              <input aria-label="開始時間" type="time" value={row.time} onChange={(e) => updateScheduleRow(row.id, "time", e.target.value)} />
+              <span className="schedule-dash">–</span>
+              <input aria-label="結束時間" type="time" value={row.endTime} onChange={(e) => updateScheduleRow(row.id, "endTime", e.target.value)} />
+              <button className="schedule-remove" type="button" disabled={scheduleRows.length === 1} onClick={() => setScheduleRows((rows) => rows.filter((item) => item.id !== row.id))}>移除</button>
+            </div>
+          ))}
+          <button className="schedule-add" type="button" onClick={addScheduleRow}>＋ 加一個時段</button>
+        </div>
+
+        <h3>2．再點選要套用排程的日期（可複選）</h3>
         <div className="month-picker">
           <div className="month-head">
             <button className="month-nav" type="button" disabled={visibleMonth <= currentMonth} onClick={() => setVisibleMonth(shiftMonth(visibleMonth, -1))}>←</button>
@@ -439,7 +454,7 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
                   <span className="calendar-date">{Number(date.slice(-2))}</span>
                   {daySlots.slice(0, 3).map((slot) => (
                     <span className={`calendar-slot ${slot.type === "諮詢" ? "consult" : "tattoo"}`} key={slot.id}>
-                      {slot.type === "諮詢" ? "諮" : "刺"} {slot.displayTime || "未定"}
+                      {slot.type === "諮詢" ? "諮" : "刺"} {slot.displayTime || "未定"}{slot.displayEndTime ? `–${slot.displayEndTime}` : ""}
                     </span>
                   ))}
                   {daySlots.length > 3 ? <span className="calendar-more">另有 {daySlots.length - 3} 筆</span> : null}
@@ -448,7 +463,7 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
               );
             })}
           </div>
-          <p className="calendar-note">可一次選多天；「刺」是刺青時段，「諮」是諮詢時段，格內會顯示時間與筆數。</p>
+          <p className="calendar-note">可一次選多天；選好後，上面的整組諮詢／刺青排程會複製到每一個日期。</p>
         </div>
 
         {activeDate && (slotsByDate.get(activeDate) || []).length > 0 ? (
@@ -457,6 +472,8 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
             {(slotsByDate.get(activeDate) || []).map((slot) => (
               <div className="day-edit-row" key={slot.id}>
                 <input type="time" value={editValue(slot, "time")} onChange={(e) => setEditValue(slot, "time", e.target.value)} />
+                <span className="schedule-dash">–</span>
+                <input type="time" value={editValue(slot, "endTime")} onChange={(e) => setEditValue(slot, "endTime", e.target.value)} />
                 <select value={editValue(slot, "type")} onChange={(e) => setEditValue(slot, "type", e.target.value)}>
                   <option>刺青</option><option>諮詢</option>
                 </select>
@@ -467,54 +484,15 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
           </div>
         ) : null}
 
-        <h3>時間（可複選）</h3>
-        <div className="chips">
-          {timeOptions.map((t) => (
-            <button
-              key={t}
-              type="button"
-              className={selectedTimes.has(t) ? "on" : ""}
-              onClick={() => toggleTime(t)}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-        <div className="time-add">
-          <input
-            type="text"
-            placeholder="HH:MM"
-            value={customTime}
-            onChange={(e) => setCustomTime(e.target.value)}
-            maxLength={5}
-          />
-          <button type="button" className="cta ghost" onClick={addCustomTime}>加入自訂時間</button>
-        </div>
-        {customTimeError ? <p className="err">{customTimeError}</p> : null}
-
-        <h3>類型</h3>
-        <div className="chips">
-          {["刺青", "諮詢"].map((t) => (
-            <button
-              key={t}
-              type="button"
-              className={slotType === t ? "on" : ""}
-              onClick={() => setSlotType(t)}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-
-        <h3>預覽（{preview.length} 個時段）</h3>
+        <h3>3．確認後建立（{preview.length} 個時段）</h3>
         {preview.length === 0 ? (
-          <p className="hint">先在月曆點選日期，再選擇時間，這裡會列出即將建立的時段。</p>
+          <p className="hint">先設定上方排程，再點選想套用的日期，這裡會列出即將建立的時段。</p>
         ) : (
           <ul className="preview-list">
             {preview.map((p) => (
               <li key={p.iso}>
-                <span>{p.label}</span>
-                <span>{slotType}</span>
+                <span>{p.label.replace(/\d{1,2}:\d{2}$/, `${p.time}–${p.endTime}`)}</span>
+                <span>{p.type}</span>
               </li>
             ))}
           </ul>
