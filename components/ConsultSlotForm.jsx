@@ -78,6 +78,7 @@ export default function ConsultSlotForm({ token, slots, slotType = "諮詢" }) {
           </button>
         ))}
       </div>
+      <p className="hint">如果以上的時段都沒有辦法的話，請到官方 LINE 詢問其他時段。</p>
       {error ? <p className="err">{error}</p> : null}
       <button className="cta" type="submit" disabled={state === "sending" || !slotId}>
         {state === "sending" ? "保留中…" : `確認這個${slotType}時段`}
