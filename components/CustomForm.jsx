@@ -47,7 +47,6 @@ export default function CustomForm() {
         name: form.get("name"),
         projectType: form.get("projectType"),
         story: form.get("story"),
-        style: form.get("style"),
         ref: form.get("ref"),
         refPhoto,
         spot: `${spot.region}${spot.note ? `（${spot.note}）` : ""}｜大概尺寸：${form.get("size") || "未填"}`,
@@ -68,7 +67,7 @@ export default function CustomForm() {
       <div className="done">
         <div className="stamp serif">收</div>
         <h2 className="serif">初步評估資料收到了</h2>
-        <p>{name}，我會先確認風格、部位與圖面是否適合施作。這一步還不是正式預約，也不需要付款。</p>
+        <p>{name}，我會先確認主題、部位與圖面是否適合施作。這一步還不是正式預約，也不需要付款。</p>
         <div className="rulebox">
           <p><b>記得加 LINE 官方帳號</b>——回覆會從那裡找你。</p>
           <p>我會親自讀過你寫的故事；確認適合承接後，再和你安排諮詢時間。</p>
@@ -110,17 +109,15 @@ export default function CustomForm() {
           placeholder="一段經歷、一個人、一句想記住的話……用你的話說就好" />
       </div>
       <div className="field">
-        <label htmlFor="style">想用哪種風格呈現這個主題呢？</label>
-        <textarea id="style" name="style" maxLength={300}
-          placeholder="可以描述喜歡的感覺、線條或色彩，也可以在下方貼上參考網址或上傳圖片" />
-        <input type="url" id="ref" name="ref" placeholder="貼上 IG／Pinterest 等參考網址（選填）" />
+        <label htmlFor="ref">有想提供米粒參考的畫面嗎？（選填）</label>
+        <input type="url" id="ref" name="ref" placeholder="貼上 IG／Pinterest 等參考網址" />
         <div style={{ marginTop: 10 }}>
           <PhotoAttach
             value={refPhoto}
             onChange={setRefPhoto}
-            label="上傳風格參考圖片"
-            previewAlt="風格參考圖片"
-            attachedHint="這張會和你的風格想法一起附進預約單。"
+            label="上傳參考圖片"
+            previewAlt="參考圖片"
+            attachedHint="這張會一起附進評估資料，讓米粒更容易理解你喜歡的畫面。"
             capture={undefined}
           />
         </div>
@@ -153,7 +150,7 @@ export default function CustomForm() {
             <p>諮詢或刺青當日遲到超過 30 分鐘，將視同取消，押金或定金不退。</p>
             <p>若有如期到場完成諮詢，最後決定不刺，1,000 元押金仍會全額退回。</p>
             <h4>草圖與設計流程</h4>
-            <p>客製作品無法在討論當天直接刺青。請先準備主題、風格、尺寸、部位、文字或字體及參考圖片，讓當天的溝通更完整。</p>
+            <p>客製作品無法在討論當天直接刺青。請先準備主題、尺寸、部位、文字或字體及參考圖片，讓當天的溝通更完整。</p>
             <p>草圖僅於諮詢現場提供約八成版本討論，不提供電子檔，也不開放拍攝；最終定稿會在刺青當天一起確認。</p>
             <p>討論完確認施作後，原 1,000 元押金會全額折抵刺青費，並於下單當日補足至總價 50% 作為定金。</p>
             <p>作品會依米粒的創作風格與你的故事設計，不接受與他人完全相同的圖案。</p>
