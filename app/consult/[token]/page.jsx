@@ -26,7 +26,7 @@ export default async function ConsultationPage({ params }) {
         <h1 className="serif">選擇你的{data.slotType === "刺青" ? "刺青" : "諮詢"}時間</h1>
         <p>{data.booking.name}，{data.slotType === "刺青" ? "這張認領圖已經確認可以安排，請選一個適合的刺青時間。" : "謝謝你願意把這段故事交給米粒。請選一個方便當面聊聊的時間。"}</p>
         {data.slots.length ? (
-          <ConsultSlotForm token={token} slots={data.slots} />
+          <ConsultSlotForm token={token} slots={data.slots} slotType={data.slotType} />
         ) : (
           <div className="rulebox">
             <p><b>目前沒有開放中的{data.slotType === "刺青" ? "刺青" : "諮詢"}時段。</b></p>
