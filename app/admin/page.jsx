@@ -168,20 +168,30 @@ function AdminStyles() {
       .time-add{display:flex;gap:8px;align-items:center;margin-top:8px}
       .time-add input{width:110px}
 
-      .month-picker{max-width:520px;border:1px solid var(--line);padding:14px;margin-top:8px}
+      .month-picker{max-width:780px;border:1px solid var(--line);padding:16px;margin-top:8px}
       .month-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
       .month-head strong{font-size:16px;letter-spacing:.08em;font-variant-numeric:tabular-nums}
       .month-nav{background:none;border:1px solid var(--line);color:var(--bone);padding:6px 12px;border-radius:var(--radius)}
       .month-nav[disabled]{opacity:.3;cursor:not-allowed}
-      .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+      .calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(82px,1fr));gap:6px;overflow-x:auto;padding-bottom:4px}
       .calendar-week{font-size:11px;text-align:center;color:var(--bone-dim);padding:4px 0}
-      .calendar-day{aspect-ratio:1;border:1px solid transparent;background:var(--ink-3);color:var(--bone);border-radius:50%;font:inherit;font-size:13px;position:relative}
+      .calendar-day{min-height:92px;border:1px solid var(--line);background:var(--ink-3);color:var(--bone);border-radius:8px;font:inherit;font-size:13px;position:relative;padding:7px;text-align:left;display:flex;flex-direction:column;gap:4px;align-items:stretch}
       .calendar-day:hover:not([disabled]){border-color:var(--cinnabar)}
       .calendar-day.on{background:var(--cinnabar);color:#fff}
-      .calendar-day.has-slot:not(.on)::after{content:"";position:absolute;width:4px;height:4px;border-radius:50%;background:var(--jade);bottom:4px;left:50%;transform:translateX(-50%)}
       .calendar-day[disabled]{opacity:.2;cursor:not-allowed}
-      .calendar-empty{aspect-ratio:1}
+      .calendar-date{font-weight:600;font-variant-numeric:tabular-nums}
+      .calendar-slot{font-size:10px;line-height:1.35;padding:2px 3px;border-radius:3px;background:rgba(91,146,122,.18);color:var(--bone-dim);white-space:nowrap}
+      .calendar-day.on .calendar-slot{background:rgba(255,255,255,.18);color:#fff}
+      .calendar-more{font-size:10px;color:var(--jade);margin-top:auto}
+      .calendar-day.on .calendar-more{color:#fff}
+      .calendar-empty{min-height:92px}
       .calendar-note{font-size:12px;color:var(--bone-dim);margin:10px 0 0}
+
+      @media(max-width:640px){
+        .month-picker{padding:10px;margin-left:-8px;margin-right:-8px}
+        .calendar-grid{grid-template-columns:repeat(7,minmax(68px,1fr))}
+        .calendar-day,.calendar-empty{min-height:82px}
+      }
 
       .preview-list{list-style:none;padding:0;margin:14px 0;border-top:1px solid var(--line)}
       .preview-list li{
@@ -276,8 +286,15 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
 
   const calendar = useMemo(() => monthDays(visibleMonth), [visibleMonth]);
   const currentMonth = monthKey(taipeiTodayDateString());
-  const occupiedDates = useMemo(
-    () => new Set((futureSlots || []).map((slot) => slot.start?.slice(0, 10)).filter(Boolean)),
+  const slotsByDate = useMemo(
+    () => (futureSlots || []).reduce((map, slot) => {
+      const date = slot.start?.slice(0, 10);
+      if (!date) return map;
+      if (!map.has(date)) map.set(date, []);
+      map.get(date).push(slot);
+      map.get(date).sort((a, b) => String(a.start).localeCompare(String(b.start)));
+      return map;
+    }, new Map()),
     [futureSlots]
   );
 
@@ -367,20 +384,30 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
           <div className="calendar-grid">
             {WEEK_LABELS.map((day) => <div className="calendar-week" key={day}>週{day}</div>)}
             {Array.from({ length: calendar.firstWeekday }, (_, i) => <div className="calendar-empty" key={`empty-${i}`} />)}
-            {calendar.dates.map((date) => (
-              <button
-                key={date}
-                type="button"
-                className={`calendar-day${selectedDates.has(date) ? " on" : ""}${occupiedDates.has(date) ? " has-slot" : ""}`}
-                disabled={date <= taipeiTodayDateString()}
-                onClick={() => toggleDate(date)}
-                aria-label={`${date}${occupiedDates.has(date) ? "，已有時段" : ""}`}
-              >
-                {Number(date.slice(-2))}
-              </button>
-            ))}
+            {calendar.dates.map((date) => {
+              const daySlots = slotsByDate.get(date) || [];
+              return (
+                <button
+                  key={date}
+                  type="button"
+                  className={`calendar-day${selectedDates.has(date) ? " on" : ""}`}
+                  disabled={date <= taipeiTodayDateString()}
+                  onClick={() => toggleDate(date)}
+                  aria-label={`${date}${daySlots.length ? `，已有 ${daySlots.length} 個時段` : ""}`}
+                >
+                  <span className="calendar-date">{Number(date.slice(-2))}</span>
+                  {daySlots.slice(0, 3).map((slot) => (
+                    <span className="calendar-slot" key={slot.id}>
+                      {slot.type === "諮詢" ? "諮" : "刺"} {slot.start?.includes("T") ? slot.start.slice(11, 16) : "未定"}
+                    </span>
+                  ))}
+                  {daySlots.length > 3 ? <span className="calendar-more">另有 {daySlots.length - 3} 筆</span> : null}
+                  {daySlots.length > 0 && daySlots.length <= 3 ? <span className="calendar-more">共 {daySlots.length} 筆</span> : null}
+                </button>
+              );
+            })}
           </div>
-          <p className="calendar-note">可一次選多天；綠點表示該日已經有開放或保留中的時段。</p>
+          <p className="calendar-note">可一次選多天；「刺」是刺青時段，「諮」是諮詢時段，格內會顯示時間與筆數。</p>
         </div>
 
         <h3>時間（可複選）</h3>
