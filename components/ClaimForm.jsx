@@ -16,7 +16,8 @@ export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
   const [slotId, setSlotId] = useState(null);
   const [spot, setSpot] = useState(null);
   const [sizeChoice, setSizeChoice] = useState("最小建議尺寸");
-  const [applicationType, setApplicationType] = useState("正常新刺");
+  const [applicationType, setApplicationType] = useState("刺在新的位置");
+  const isCoverApplication = applicationType === "覆蓋原有刺青或疤痕";
   const [coverPhoto, setCoverPhoto] = useState(null);
   const [tryOnOpen, setTryOnOpen] = useState(false);
   const [tryOnImage, setTryOnImage] = useState(null); // dataURL
@@ -36,11 +37,11 @@ export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
       setError("請先在 3D 人體模型上點選想刺的位置");
       return;
     }
-    if (applicationType === "蓋在原有刺青上" && !coverPhoto) {
-      setError("想蓋在原有刺青上，需要先上傳目前刺青的清楚照片");
+    if (isCoverApplication && !coverPhoto) {
+      setError("想覆蓋原有刺青或疤痕，需要先上傳目前狀況的清楚照片");
       return;
     }
-    if (applicationType === "正常新刺" && !slotId && slots.length > 0) {
+    if (!isCoverApplication && !slotId && slots.length > 0) {
       setError("請先選一個時段");
       return;
     }
@@ -62,7 +63,7 @@ export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
         coverPhoto,
         tryOn: tryOnImage,
         workId,
-        slotId: applicationType === "正常新刺" ? slotId : null,
+        slotId: !isCoverApplication ? slotId : null,
       }),
     });
     if (!res.ok) {
@@ -80,9 +81,9 @@ export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
   if (state === "done") {
     return (
       <div className="done" style={{ margin: "20px 0", textAlign: "left" }}>
-        <h2 className="serif">{applicationType === "蓋在原有刺青上" ? "資料收到了，先幫你評估" : "這張圖，先幫你留著"}</h2>
+        <h2 className="serif">{isCoverApplication ? "資料收到了，先幫你評估" : "這張圖，先幫你留著"}</h2>
         <p>{doneMsg}</p>
-        {applicationType === "蓋在原有刺青上" ? (
+        {isCoverApplication ? (
           <p>米粒會先看原有刺青的深淺、範圍與位置，確認這張認領圖是否適合直接改蓋，再透過 LINE 和你說明。</p>
         ) : null}
         {sizeChoice !== "最小建議尺寸" ? (
@@ -138,18 +139,18 @@ export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
       <div className="field">
         <label>這張圖想怎麼刺呢？</label>
         <div className="slots">
-          {["正常新刺", "蓋在原有刺青上"].map((option) => (
+          {["刺在新的位置", "覆蓋原有刺青或疤痕"].map((option) => (
             <button type="button" key={option} className={`slot${applicationType === option ? " on" : ""}`}
               onClick={() => { setApplicationType(option); setSlotId(null); setError(""); }}>
               {option}
             </button>
           ))}
         </div>
-        {applicationType === "蓋在原有刺青上" ? (
+        {isCoverApplication ? (
           <div className="hint">需要先評估舊刺青的深淺、大小、位置與可用空間；不一定每張認領圖都適合直接改蓋。</div>
         ) : null}
       </div>
-      {applicationType === "蓋在原有刺青上" ? (
+      {isCoverApplication ? (
         <div className="field">
           <label>上傳原有刺青的清楚照片（必填）</label>
           <PhotoAttach value={coverPhoto} onChange={setCoverPhoto} label="上傳原有刺青照片" previewAlt="原有刺青照片" />
@@ -213,7 +214,7 @@ export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
           <div className="hint">頁面上標的是這張圖的最小建議尺寸。</div>
         )}
       </div>
-      {applicationType === "正常新刺" ? <div className="field">
+      {!isCoverApplication ? <div className="field">
         <label>選一個刺青時段</label>
         {slots.length === 0 ? (
           <p className="hint">目前沒有開放中的時段——先送出認領，時段之後在 LINE 上約。</p>
@@ -241,7 +242,7 @@ export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
       </button>
       <BookingConsentModal
         open={consentOpen}
-        type={applicationType === "蓋在原有刺青上" ? "claim-cover" : "claim"}
+        type={isCoverApplication ? "claim-cover" : "claim"}
         onClose={() => setConsentOpen(false)}
         onConfirm={submit}
       />
