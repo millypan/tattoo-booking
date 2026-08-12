@@ -186,11 +186,19 @@ function AdminStyles() {
       .calendar-day.on .calendar-more{color:#fff}
       .calendar-empty{min-height:92px}
       .calendar-note{font-size:12px;color:var(--bone-dim);margin:10px 0 0}
+      .day-manager{max-width:780px;margin:12px 0 22px;border:1px solid var(--line);padding:14px}
+      .day-manager h4{margin:0 0 10px;font-size:14px;letter-spacing:.08em}
+      .day-edit-row{display:grid;grid-template-columns:minmax(100px,1fr) minmax(110px,1fr) auto auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+      .day-edit-row input,.day-edit-row select{margin:0;min-width:0}
+      .day-action{background:none;border:1px solid var(--line);color:var(--bone);padding:8px 11px;border-radius:var(--radius);white-space:nowrap}
+      .day-action.save{border-color:var(--jade)}
+      .day-action.close:hover{border-color:var(--cinnabar);color:var(--cinnabar)}
 
       @media(max-width:640px){
         .month-picker{padding:10px;margin-left:-8px;margin-right:-8px}
         .calendar-grid{grid-template-columns:repeat(7,minmax(68px,1fr))}
         .calendar-day,.calendar-empty{min-height:82px}
+        .day-edit-row{grid-template-columns:1fr 1fr}
       }
 
       .preview-list{list-style:none;padding:0;margin:14px 0;border-top:1px solid var(--line)}
@@ -225,6 +233,7 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
   const [timeOptions, setTimeOptions] = useState(DEFAULT_TIMES);
   const [selectedTimes, setSelectedTimes] = useState(() => new Set());
   const [selectedDates, setSelectedDates] = useState(() => new Set());
+  const [activeDate, setActiveDate] = useState(null);
   const [visibleMonth, setVisibleMonth] = useState(() => monthKey(taipeiTodayDateString()));
   const [customTime, setCustomTime] = useState("");
   const [customTimeError, setCustomTimeError] = useState("");
@@ -237,6 +246,8 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
   const [futureSlots, setFutureSlots] = useState(null);
   const [slotsError, setSlotsError] = useState("");
   const [closingId, setClosingId] = useState(null);
+  const [savingId, setSavingId] = useState(null);
+  const [slotEdits, setSlotEdits] = useState({});
 
   const loadFutureSlots = useCallback(async () => {
     setSlotsError("");
@@ -255,6 +266,7 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
   }, [loadFutureSlots]);
 
   function toggleDate(v) {
+    setActiveDate(v);
     setSelectedDates((prev) => {
       const next = new Set(prev);
       if (next.has(v)) next.delete(v);
@@ -292,7 +304,7 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
       if (!date) return map;
       if (!map.has(date)) map.set(date, []);
       map.get(date).push(slot);
-      map.get(date).sort((a, b) => String(a.start).localeCompare(String(b.start)));
+      map.get(date).sort((a, b) => String(a.displayTime || "99:99").localeCompare(String(b.displayTime || "99:99")));
       return map;
     }, new Map()),
     [futureSlots]
@@ -363,6 +375,33 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
     setClosingId(null);
   }
 
+  function editValue(slot, field) {
+    return slotEdits[slot.id]?.[field] ?? (field === "time" ? (slot.displayTime || "") : slot.type);
+  }
+
+  function setEditValue(slot, field, value) {
+    setSlotEdits((prev) => ({ ...prev, [slot.id]: { time: editValue(slot, "time"), type: editValue(slot, "type"), ...prev[slot.id], [field]: value } }));
+  }
+
+  async function saveSlot(slot) {
+    const time = editValue(slot, "time");
+    const type = editValue(slot, "type");
+    if (!TIME_RE.test(time)) return setSlotsError("請輸入正確時間，例如 14:30");
+    if (slot.status === "保留中" && !window.confirm("這個時段已有客人保留，確定要更改時間或類型？")) return;
+    setSavingId(slot.id); setSlotsError("");
+    try {
+      const res = await apiFetch("/api/admin/slots", {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: slot.id, action: "update", date: activeDate, time, type }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || "更新失敗");
+      setSlotEdits((prev) => { const next = { ...prev }; delete next[slot.id]; return next; });
+      await loadFutureSlots();
+    } catch (e) { if (e.message !== "unauthorized") setSlotsError(e.message); }
+    setSavingId(null);
+  }
+
   return (
     <div>
       <BackLink />
@@ -409,6 +448,22 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
           </div>
           <p className="calendar-note">可一次選多天；「刺」是刺青時段，「諮」是諮詢時段，格內會顯示時間與筆數。</p>
         </div>
+
+        {activeDate && (slotsByDate.get(activeDate) || []).length > 0 ? (
+          <div className="day-manager">
+            <h4>{activeDate.replaceAll("-", "/")}｜當日管理（由早到晚）</h4>
+            {(slotsByDate.get(activeDate) || []).map((slot) => (
+              <div className="day-edit-row" key={slot.id}>
+                <input type="time" value={editValue(slot, "time")} onChange={(e) => setEditValue(slot, "time", e.target.value)} />
+                <select value={editValue(slot, "type")} onChange={(e) => setEditValue(slot, "type", e.target.value)}>
+                  <option>刺青</option><option>諮詢</option>
+                </select>
+                <button className="day-action save" type="button" disabled={savingId === slot.id} onClick={() => saveSlot(slot)}>{savingId === slot.id ? "儲存中…" : "儲存"}</button>
+                <button className="day-action close" type="button" disabled={closingId === slot.id} onClick={() => handleClose(slot.id, slot.status)}>關閉</button>
+              </div>
+            ))}
+          </div>
+        ) : null}
 
         <h3>時間（可複選）</h3>
         <div className="chips">
