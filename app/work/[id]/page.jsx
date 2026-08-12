@@ -36,7 +36,6 @@ export default async function WorkPage({ params }) {
           <ul className="facts">
             <li><span>價格</span><b>{work.price != null ? `NT$ ${work.price.toLocaleString()}` : "詢價"}</b></li>
             <li><span>最小建議尺寸</span><b>{work.size || "—"}</b></li>
-            <li><span>風格</span><b>{work.styles.join("・") || "—"}</b></li>
             <li><span>建議部位</span><b>{work.spot || "—"}</b></li>
           </ul>
           <ClaimForm
