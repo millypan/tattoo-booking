@@ -4,11 +4,12 @@ import { revalidatePath } from "next/cache";
 export async function POST(req) {
   try {
     const { name, spot, workId, slotId, sizeChoice, tryOn, applicationType, coverPhoto } = await req.json();
-    const allowedApplicationTypes = ["正常新刺", "蓋在原有刺青上"];
+    const allowedApplicationTypes = ["刺在新的位置", "覆蓋原有刺青或疤痕", "正常新刺", "蓋在原有刺青上"];
+    const isCoverApplication = ["覆蓋原有刺青或疤痕", "蓋在原有刺青上"].includes(applicationType);
     if (!name?.trim() || !spot?.trim() || !workId || !allowedApplicationTypes.includes(applicationType)) {
       return Response.json({ error: "缺少必填欄位" }, { status: 400 });
     }
-    if (applicationType === "蓋在原有刺青上" && !coverPhoto) {
+    if (isCoverApplication && !coverPhoto) {
       return Response.json({ error: "改蓋案件需要舊刺青照片" }, { status: 400 });
     }
     const work = await getWork(workId);
@@ -39,7 +40,7 @@ export async function POST(req) {
       coverPhotoUploadId,
       applicationType,
       workId,
-      slotId: applicationType === "正常新刺" ? (slotId || undefined) : undefined,
+      slotId: !isCoverApplication ? (slotId || undefined) : undefined,
     });
     revalidatePath("/");
     revalidatePath(`/work/${workId}`);
