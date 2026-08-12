@@ -1,4 +1,4 @@
-import { getFutureSlots, createSlots, closeSlot, getAdminPassword } from "../../../../lib/notion";
+import { getFutureSlots, createSlots, closeSlot, updateAdminSlot, getAdminPassword } from "../../../../lib/notion";
 
 // 批次建立可能要逐筆呼叫 Notion API（見 lib/notion.js createSlots），
 // 上限拉到 60 秒讓合法批次（≤60 筆，見下方 MAX_CREATE_SLOTS）有足夠時間跑完。
@@ -63,12 +63,19 @@ export async function POST(request) {
 export async function PATCH(request) {
   if (!(await isAuthed(request))) return unauthorized();
   try {
-    const { id } = await request.json();
+    const { id, action, date, time, type } = await request.json();
     if (!id) return Response.json({ error: "缺少 id" }, { status: 400 });
+    if (action === "update") {
+      if (!DATE_RE.test(date) || !TIME_RE.test(time) || !["刺青", "諮詢"].includes(type)) {
+        return Response.json({ error: "時段格式錯誤" }, { status: 400 });
+      }
+      await updateAdminSlot({ id, date, time, type });
+      return Response.json({ ok: true });
+    }
     await closeSlot(id);
     return Response.json({ ok: true });
   } catch (e) {
     console.error("admin slots PATCH error", e);
-    return Response.json({ error: "server" }, { status: 500 });
+    return Response.json({ error: e.message || "server" }, { status: 400 });
   }
 }
