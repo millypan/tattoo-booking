@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 
-export default function ConsultSlotForm({ token, slots }) {
+export default function ConsultSlotForm({ token, slots, slotType = "諮詢" }) {
+  const isTattoo = slotType === "刺青";
   const [slotId, setSlotId] = useState("");
   const [state, setState] = useState("form");
   const [error, setError] = useState("");
@@ -24,12 +25,12 @@ export default function ConsultSlotForm({ token, slots }) {
       setError(data.error || "暫時無法保留時段，請稍後再試");
       return;
     }
-    setSelectedLabel(data.label || "已選擇諮詢時段");
+    setSelectedLabel(data.label || `已選擇${slotType}時段`);
     setState("done");
   }
 
   async function copyLineMessage() {
-    const message = `米粒你好，我已經選好諮詢時間：${selectedLabel}，再麻煩你提供押金資訊，謝謝！`;
+    const message = `米粒你好，我已經選好${slotType}時間：${selectedLabel}，再麻煩你提供${isTattoo ? "定金" : "押金"}資訊，謝謝！`;
     try {
       await navigator.clipboard.writeText(message);
       setCopied(true);
@@ -47,8 +48,8 @@ export default function ConsultSlotForm({ token, slots }) {
         <p className="consult-selected">{selectedLabel}</p>
         <div className="rulebox">
           <p><b>把這段訊息傳給米粒：</b></p>
-          <p className="consult-line-message">米粒你好，我已經選好諮詢時間：{selectedLabel}，再麻煩你提供押金資訊，謝謝！</p>
-          <p>米粒確認後會提供押金資訊；完成 1,000 元押金後，才算正式完成諮詢預約。</p>
+          <p className="consult-line-message">米粒你好，我已經選好{slotType}時間：{selectedLabel}，再麻煩你提供{isTattoo ? "定金" : "押金"}資訊，謝謝！</p>
+          <p>{isTattoo ? "米粒確認後會提供定金資訊；於下單當日完成 50% 定金後，才算正式預約。" : "米粒確認後會提供押金資訊；完成 1,000 元押金後，才算正式完成諮詢預約。"}</p>
         </div>
         {error ? <p className="err">{error}</p> : null}
         <div className="consult-actions">
@@ -79,7 +80,7 @@ export default function ConsultSlotForm({ token, slots }) {
       </div>
       {error ? <p className="err">{error}</p> : null}
       <button className="cta" type="submit" disabled={state === "sending" || !slotId}>
-        {state === "sending" ? "保留中…" : "確認這個諮詢時段"}
+        {state === "sending" ? "保留中…" : `確認這個${slotType}時段`}
       </button>
     </form>
   );
