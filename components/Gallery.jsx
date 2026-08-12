@@ -21,7 +21,7 @@ export function WorkCard({ w }) {
           <span>{w.size || ""}</span>
         </div>
         <div className="meta">
-          <span>{w.styles.join("・")}</span>
+          <span></span>
           <span className={`pill ${cls}`}>{label}</span>
         </div>
       </div>
