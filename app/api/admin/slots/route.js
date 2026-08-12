@@ -37,22 +37,20 @@ export async function GET(request) {
 export async function POST(request) {
   if (!(await isAuthed(request))) return unauthorized();
   try {
-    const { slots, type } = await request.json();
+    const { slots } = await request.json();
     if (!Array.isArray(slots) || slots.length === 0) {
       return Response.json({ error: "缺少時段清單" }, { status: 400 });
     }
     if (slots.length > MAX_CREATE_SLOTS) {
       return Response.json({ error: "一次最多開 60 個，請分批" }, { status: 400 });
     }
-    if (type !== "刺青" && type !== "諮詢") {
-      return Response.json({ error: "類型錯誤" }, { status: 400 });
-    }
     for (const s of slots) {
-      if (!DATE_RE.test(s?.date) || !TIME_RE.test(s?.time)) {
+      if (!DATE_RE.test(s?.date) || !TIME_RE.test(s?.time) || !TIME_RE.test(s?.endTime) ||
+          !["刺青", "諮詢"].includes(s?.type) || s.endTime <= s.time) {
         return Response.json({ error: "時段格式錯誤" }, { status: 400 });
       }
     }
-    const result = await createSlots({ slots, type });
+    const result = await createSlots({ slots });
     return Response.json(result);
   } catch (e) {
     console.error("admin slots POST error", e);
@@ -63,13 +61,13 @@ export async function POST(request) {
 export async function PATCH(request) {
   if (!(await isAuthed(request))) return unauthorized();
   try {
-    const { id, action, date, time, type } = await request.json();
+    const { id, action, date, time, endTime, type } = await request.json();
     if (!id) return Response.json({ error: "缺少 id" }, { status: 400 });
     if (action === "update") {
-      if (!DATE_RE.test(date) || !TIME_RE.test(time) || !["刺青", "諮詢"].includes(type)) {
+      if (!DATE_RE.test(date) || !TIME_RE.test(time) || !TIME_RE.test(endTime) || endTime <= time || !["刺青", "諮詢"].includes(type)) {
         return Response.json({ error: "時段格式錯誤" }, { status: 400 });
       }
-      await updateAdminSlot({ id, date, time, type });
+      await updateAdminSlot({ id, date, time, endTime, type });
       return Response.json({ ok: true });
     }
     await closeSlot(id);
