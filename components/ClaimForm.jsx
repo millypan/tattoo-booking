@@ -229,6 +229,7 @@ export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
                 {s.label}
               </button>
             ))}
+            <p className="hint">如果以上的時段都沒有辦法的話，請到官方 LINE 詢問其他時段。</p>
           </div>
         )}
       </div> : (
