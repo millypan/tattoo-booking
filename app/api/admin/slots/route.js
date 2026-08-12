@@ -45,8 +45,7 @@ export async function POST(request) {
       return Response.json({ error: "一次最多開 60 個，請分批" }, { status: 400 });
     }
     for (const s of slots) {
-      if (!DATE_RE.test(s?.date) || !TIME_RE.test(s?.time) || !TIME_RE.test(s?.endTime) ||
-          !["刺青", "諮詢"].includes(s?.type) || s.endTime <= s.time) {
+      if (!DATE_RE.test(s?.date) || !TIME_RE.test(s?.time) || !["刺青", "諮詢"].includes(s?.type)) {
         return Response.json({ error: "時段格式錯誤" }, { status: 400 });
       }
     }
@@ -61,13 +60,13 @@ export async function POST(request) {
 export async function PATCH(request) {
   if (!(await isAuthed(request))) return unauthorized();
   try {
-    const { id, action, date, time, endTime, type } = await request.json();
+    const { id, action, date, time, type } = await request.json();
     if (!id) return Response.json({ error: "缺少 id" }, { status: 400 });
     if (action === "update") {
-      if (!DATE_RE.test(date) || !TIME_RE.test(time) || !TIME_RE.test(endTime) || endTime <= time || !["刺青", "諮詢"].includes(type)) {
+      if (!DATE_RE.test(date) || !TIME_RE.test(time) || !["刺青", "諮詢"].includes(type)) {
         return Response.json({ error: "時段格式錯誤" }, { status: 400 });
       }
-      await updateAdminSlot({ id, date, time, endTime, type });
+      await updateAdminSlot({ id, date, time, type });
       return Response.json({ ok: true });
     }
     await closeSlot(id);
