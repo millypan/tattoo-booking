@@ -2,7 +2,7 @@ import { createCustomBooking, uploadDataUrlImage } from "../../../lib/notion";
 
 export async function POST(req) {
   try {
-    const { name, projectType, story, style, ref, spot, partPhoto, refPhoto } = await req.json();
+    const { name, projectType, story, ref, spot, partPhoto, refPhoto } = await req.json();
     const allowedProjectTypes = ["全新客製", "舊刺青修改／延伸", "舊刺青改蓋"];
     if (!name?.trim() || !allowedProjectTypes.includes(projectType) || !story?.trim() || !spot?.trim()) {
       return Response.json({ error: "缺少必填欄位" }, { status: 400 });
@@ -23,7 +23,7 @@ export async function POST(req) {
     }
     if (refPhoto) {
       try {
-        refPhotoUploadId = await uploadDataUrlImage(refPhoto, "風格參考圖.jpg");
+        refPhotoUploadId = await uploadDataUrlImage(refPhoto, "參考圖片.jpg");
       } catch (e) {
         console.error("reference photo upload failed", e); // 附圖失敗不擋預約
       }
@@ -32,7 +32,6 @@ export async function POST(req) {
       name: name.trim().slice(0, 40),
       projectType,
       story: story.trim().slice(0, 1000),
-      style: (style || "").slice(0, 300),
       ref: refUrl || null,
       spot: spot.trim().slice(0, 100),
       partPhotoUploadId,
