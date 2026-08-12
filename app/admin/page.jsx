@@ -180,8 +180,10 @@ function AdminStyles() {
       .calendar-day.on{background:var(--cinnabar);color:#fff}
       .calendar-day[disabled]{opacity:.2;cursor:not-allowed}
       .calendar-date{font-weight:600;font-variant-numeric:tabular-nums}
-      .calendar-slot{font-size:10px;line-height:1.35;padding:2px 3px;border-radius:3px;background:rgba(91,146,122,.18);color:var(--bone-dim);white-space:nowrap}
-      .calendar-day.on .calendar-slot{background:rgba(255,255,255,.18);color:#fff}
+      .calendar-slot{font-size:10px;line-height:1.35;padding:2px 3px;border-radius:3px;color:var(--bone);white-space:nowrap}
+      .calendar-slot.tattoo{background:rgba(204,83,56,.32)}
+      .calendar-slot.consult{background:rgba(75,132,168,.34)}
+      .calendar-day.on .calendar-slot{color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
       .calendar-more{font-size:10px;color:var(--jade);margin-top:auto}
       .calendar-day.on .calendar-more{color:#fff}
       .calendar-empty{min-height:92px}
@@ -436,7 +438,7 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
                 >
                   <span className="calendar-date">{Number(date.slice(-2))}</span>
                   {daySlots.slice(0, 3).map((slot) => (
-                    <span className="calendar-slot" key={slot.id}>
+                    <span className={`calendar-slot ${slot.type === "諮詢" ? "consult" : "tattoo"}`} key={slot.id}>
                       {slot.type === "諮詢" ? "諮" : "刺"} {slot.displayTime || "未定"}
                     </span>
                   ))}
