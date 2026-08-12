@@ -478,8 +478,87 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
         )}
       </section>
 
+      <PaymentSection apiFetch={apiFetch} />
+
       <PasswordSection adminKey={adminKey} onAdminKeyChange={onAdminKeyChange} />
     </div>
+  );
+}
+
+function PaymentSection({ apiFetch }) {
+  const [bookingId, setBookingId] = useState("");
+  const [booking, setBooking] = useState(null);
+  const [amount, setAmount] = useState("");
+  const [method, setMethod] = useState("匯款");
+  const [nature, setNature] = useState("討論押金1000");
+  const [lastFive, setLastFive] = useState("");
+  const [requestId, setRequestId] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get("booking") || "";
+    setBookingId(id);
+    setRequestId(crypto.randomUUID());
+  }, []);
+
+  useEffect(() => {
+    if (!bookingId) return;
+    apiFetch(`/api/admin/payments?id=${encodeURIComponent(bookingId)}`)
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "讀取預約失敗");
+        setBooking(data);
+        setNature(data.suggestedNature);
+        setAmount(data.suggestedAmount || "");
+        setLastFive(data.lastFive || "");
+      })
+      .catch((e) => { if (e.message !== "unauthorized") setError(e.message); });
+  }, [apiFetch, bookingId]);
+
+  async function submitPayment() {
+    if (!booking || !amount) return setError("請先填寫實收金額");
+    if (!window.confirm(`確認已收到 ${Number(amount).toLocaleString("zh-TW")} 元，並建立收款紀錄？`)) return;
+    setSubmitting(true); setError(""); setSuccess("");
+    try {
+      const res = await apiFetch("/api/admin/payments", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId, amount, method, nature, lastFive, requestId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "建立收款失敗");
+      setSuccess(data.duplicate ? "這筆收款已經建立過，沒有重複新增。" : "收款紀錄已建立，預約狀態也已同步更新。 ");
+    } catch (e) { if (e.message !== "unauthorized") setError(e.message); }
+    setSubmitting(false);
+  }
+
+  return (
+    <section className="admin-section">
+      <h2 className="serif">確認收款</h2>
+      {!bookingId ? <p className="hint">請從 Notion 預約訂單中的「確認收款」連結開啟，系統會自動帶入該筆預約。</p> : null}
+      {bookingId && !booking && !error ? <p className="hint">讀取預約資料中…</p> : null}
+      {booking ? <div>
+        <p><b>{booking.name}</b>｜{booking.type}｜目前狀態：{booking.status}</p>
+        <h3>實收金額</h3>
+        <input type="number" step="1" value={amount} onChange={(e) => setAmount(e.target.value)} />
+        <h3>款項性質</h3>
+        <select value={nature} onChange={(e) => setNature(e.target.value)}>
+          {["討論押金1000", "定金-總價一半", "尾款", "押金退回", "其他"].map((v) => <option key={v}>{v}</option>)}
+        </select>
+        <h3>付款方式</h3>
+        <select value={method} onChange={(e) => setMethod(e.target.value)}>
+          {["匯款", "現金", "LINE Pay"].map((v) => <option key={v}>{v}</option>)}
+        </select>
+        <h3>轉帳末五碼</h3>
+        <input type="text" inputMode="numeric" maxLength={5} value={lastFive} onChange={(e) => setLastFive(e.target.value.replace(/\D/g, "").slice(0, 5))} />
+        <button className="cta" type="button" disabled={submitting} onClick={submitPayment}>
+          {submitting ? "建立中…" : "確認收款並建立紀錄"}
+        </button>
+      </div> : null}
+      {error ? <p className="err">{error}</p> : null}
+      {success ? <div className="result-box"><p>{success}</p></div> : null}
+    </section>
   );
 }
 
