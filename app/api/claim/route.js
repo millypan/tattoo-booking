@@ -3,10 +3,11 @@ import { revalidatePath } from "next/cache";
 
 export async function POST(req) {
   try {
-    const { name, spot, workId, slotId, sizeChoice, tryOn, applicationType, coverPhoto } = await req.json();
+    const { name, phone, spot, workId, slotId, sizeChoice, tryOn, applicationType, coverPhoto } = await req.json();
     const allowedApplicationTypes = ["刺在新的位置", "覆蓋原有刺青或疤痕", "正常新刺", "蓋在原有刺青上"];
     const isCoverApplication = ["覆蓋原有刺青或疤痕", "蓋在原有刺青上"].includes(applicationType);
-    if (!name?.trim() || !spot?.trim() || !workId || !allowedApplicationTypes.includes(applicationType)) {
+    const cleanPhone = String(phone || "").replace(/[^0-9+]/g, "").slice(0, 20);
+    if (!name?.trim() || !/^\+?\d{8,15}$/.test(cleanPhone) || !spot?.trim() || !workId || !allowedApplicationTypes.includes(applicationType)) {
       return Response.json({ error: "缺少必填欄位" }, { status: 400 });
     }
     if (isCoverApplication && !coverPhoto) {
@@ -32,8 +33,9 @@ export async function POST(req) {
         console.error("tryOn upload failed", e); // 附圖失敗不擋預約
       }
     }
-    await createClaimBooking({
+    const { claimCode } = await createClaimBooking({
       name: name.trim().slice(0, 40),
+      phone: cleanPhone,
       spot: spot.trim().slice(0, 100),
       sizeChoice: String(sizeChoice || "最小建議尺寸").slice(0, 30),
       tryOnUploadId,
@@ -44,7 +46,7 @@ export async function POST(req) {
     });
     revalidatePath("/");
     revalidatePath(`/work/${workId}`);
-    return Response.json({ ok: true });
+    return Response.json({ ok: true, claimCode });
   } catch (e) {
     console.error("claim error", e);
     return Response.json({ error: "server" }, { status: 500 });
