@@ -40,7 +40,6 @@ export default async function WorkPage({ params }) {
             imageCount={work.imageCount}
             price={work.price}
             minimumSize={work.size}
-            recommendedSpot={work.spot}
           />
         </div>
       </div>
