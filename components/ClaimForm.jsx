@@ -12,7 +12,15 @@ const Body3D = dynamic(() => import("./Body3D"), {
 const TryOn = dynamic(() => import("./TryOn"), { ssr: false });
 const PhotoAttach = dynamic(() => import("./PhotoAttach"), { ssr: false });
 
-export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
+export default function ClaimForm({
+  workId,
+  workName,
+  slots,
+  imageCount = 1,
+  price,
+  minimumSize,
+  recommendedSpot,
+}) {
   const [slotId, setSlotId] = useState(null);
   const [spot, setSpot] = useState(null);
   const [sizeChoice, setSizeChoice] = useState("最小建議尺寸");
@@ -133,10 +141,6 @@ export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
         </details>
       </section>
       <div className="field">
-        <label htmlFor="name">怎麼稱呼你</label>
-        <input type="text" id="name" name="name" required maxLength={40} />
-      </div>
-      <div className="field">
         <label>這張圖想怎麼刺呢？</label>
         <div className="slots">
           {["刺在新的位置", "覆蓋原有刺青或疤痕"].map((option) => (
@@ -192,6 +196,11 @@ export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
           onClose={() => setTryOnOpen(false)}
         />
       ) : null}
+      <div className="claim-form-divider" aria-hidden="true" />
+      <div className="field">
+        <label htmlFor="name">怎麼稱呼你</label>
+        <input type="text" id="name" name="name" required maxLength={40} />
+      </div>
       <div className="field">
         <label>尺寸</label>
         <div className="slots">
@@ -236,6 +245,16 @@ export default function ClaimForm({ workId, workName, slots, imageCount = 1 }) {
       </div> : (
         <div className="field"><p className="hint">改蓋案件會先由米粒評估是否適合；確認可行後，再一起安排刺青時間。</p></div>
       )}
+      <section className="claim-work-summary" aria-labelledby="claim-work-summary-title">
+        <p className="booking-notice-kicker">送出前，再確認一次</p>
+        <h3 id="claim-work-summary-title" className="serif">這張圖的刺青建議</h3>
+        <ul className="facts">
+          <li><span>價格</span><b>{price != null ? `NT$ ${price.toLocaleString()}` : "詢價"}</b></li>
+          <li><span>最小建議尺寸</span><b>{minimumSize || "—"}</b></li>
+          <li><span>建議部位</span><b>{recommendedSpot || "—"}</b></li>
+        </ul>
+        <p className="hint">價格以最小建議尺寸與一般部位為基準；特殊部位、放大尺寸或需要調整設計時，米粒會再和你確認報價。</p>
+      </section>
       {error ? <p className="err">{error}</p> : null}
       <button className="cta" type="submit" disabled={state === "sending"}>
         {state === "sending" ? "送出中…" : "預約這張圖"}
