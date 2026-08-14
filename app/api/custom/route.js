@@ -2,9 +2,10 @@ import { createCustomBooking, uploadDataUrlImage } from "../../../lib/notion";
 
 export async function POST(req) {
   try {
-    const { name, projectType, story, ref, spot, partPhoto, refPhoto } = await req.json();
+    const { name, phone, projectType, story, ref, spot, partPhoto, refPhoto } = await req.json();
+    const cleanPhone = String(phone || "").replace(/[^0-9+]/g, "").slice(0, 20);
     const allowedProjectTypes = ["全新客製", "舊刺青修改／延伸", "舊刺青改蓋"];
-    if (!name?.trim() || !allowedProjectTypes.includes(projectType) || !story?.trim() || !spot?.trim()) {
+    if (!name?.trim() || !/^\+?\d{8,15}$/.test(cleanPhone) || !allowedProjectTypes.includes(projectType) || !story?.trim() || !spot?.trim()) {
       return Response.json({ error: "缺少必填欄位" }, { status: 400 });
     }
     if (projectType !== "全新客製" && !partPhoto) {
@@ -28,8 +29,9 @@ export async function POST(req) {
         console.error("reference photo upload failed", e); // 附圖失敗不擋預約
       }
     }
-    await createCustomBooking({
+    const { assessmentCode } = await createCustomBooking({
       name: name.trim().slice(0, 40),
+      phone: cleanPhone,
       projectType,
       story: story.trim().slice(0, 1000),
       ref: refUrl || null,
@@ -37,7 +39,7 @@ export async function POST(req) {
       partPhotoUploadId,
       refPhotoUploadId,
     });
-    return Response.json({ ok: true });
+    return Response.json({ ok: true, assessmentCode });
   } catch (e) {
     console.error("custom error", e);
     return Response.json({ error: "server" }, { status: 500 });
