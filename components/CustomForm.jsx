@@ -15,6 +15,8 @@ export default function CustomForm() {
   const [state, setState] = useState("form");
   const [error, setError] = useState("");
   const [name, setName] = useState("");
+  const [lineMessage, setLineMessage] = useState("");
+  const [copied, setCopied] = useState(false);
   const [projectType, setProjectType] = useState("");
   const [spot, setSpot] = useState(null);
   const [partPhoto, setPartPhoto] = useState(null);
@@ -45,6 +47,7 @@ export default function CustomForm() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: form.get("name"),
+        phone: form.get("phone"),
         projectType: form.get("projectType"),
         story: form.get("story"),
         ref: form.get("ref"),
@@ -58,8 +61,20 @@ export default function CustomForm() {
       setError("送出失敗，請再試一次，或直接透過 LINE 官方帳號聯絡。");
       return;
     }
-    setName(form.get("name"));
+    const data = await res.json();
+    const customerName = form.get("name");
+    setName(customerName);
+    setLineMessage(`米粒你好，我是${customerName}。\n我剛剛送出了客製刺青初步評估。\n案件類型：${form.get("projectType")}\n想刺部位：${spot.region}${spot.note ? `（${spot.note}）` : ""}\n初評編號：${data.assessmentCode}\n請幫我確認資料是否有收到，謝謝！`);
     setState("done");
+  }
+
+  async function copyLineMessage() {
+    try {
+      await navigator.clipboard.writeText(lineMessage);
+      setCopied(true);
+    } catch {
+      setError("無法自動複製，請長按下方訊息後選擇複製。");
+    }
   }
 
   if (state === "done") {
@@ -68,19 +83,23 @@ export default function CustomForm() {
         <div className="stamp serif">收</div>
         <h2 className="serif">初步評估資料收到了</h2>
         <p>{name}，我會先確認主題、部位與圖面是否適合施作。這一步還不是正式預約，也不需要付款。</p>
-        <div className="rulebox">
-          <p><b>記得加 LINE 官方帳號</b>——回覆會從那裡找你。</p>
+        <div className="rulebox claim-line-required">
+          <p className="booking-notice-kicker">還差最後一步</p>
+          <h3 className="serif">請務必把這段訊息傳到官方 LINE</h3>
+          <p>網站無法直接辨識你的 LINE 身分。米粒收到這段訊息後，才能把初評資料和你的 LINE 對話連在一起。</p>
           <p>我會親自讀過你寫的故事；確認適合承接後，再和你安排諮詢時間。</p>
           <p>選定諮詢時段後才需要支付 1,000 元押金。若需要調整方向，或不建議直接修改舊圖，我也會先說明原因。</p>
-          <p>
-            {process.env.NEXT_PUBLIC_LINE_URL ? (
-              <a className="cta" href={process.env.NEXT_PUBLIC_LINE_URL} target="_blank" rel="noreferrer">加 LINE 官方帳號</a>
-            ) : (
-              <b>LINE 官方帳號連結（待補）</b>
-            )}
-          </p>
+          <p className="consult-line-message">{lineMessage}</p>
+          {error ? <p className="err">{error}</p> : null}
+          <div className="consult-actions">
+            <button type="button" className="cta" onClick={copyLineMessage}>{copied ? "已複製初評訊息 ✓" : "複製初評確認訊息"}</button>
+            {copied && process.env.NEXT_PUBLIC_LINE_URL ? (
+              <a className="cta ghost" href={process.env.NEXT_PUBLIC_LINE_URL} target="_blank" rel="noreferrer">前往官方 LINE</a>
+            ) : null}
+          </div>
+          <p className="hint">複製後請前往 LINE 對話，貼上並送出。手機號碼只作為漏傳訊息時的聯絡備援。</p>
         </div>
-        <Link className="cta ghost" href="/">看看認領圖</Link>
+        {copied ? <Link className="back" href="/">稍後看看認領圖</Link> : null}
       </div>
     );
   }
@@ -90,6 +109,11 @@ export default function CustomForm() {
       <div className="field">
         <label htmlFor="name">怎麼稱呼你</label>
         <input type="text" id="name" name="name" required maxLength={40} />
+      </div>
+      <div className="field">
+        <label htmlFor="phone">手機號碼</label>
+        <input type="tel" inputMode="tel" autoComplete="tel" id="phone" name="phone" required maxLength={20} placeholder="例：0912 345 678" />
+        <div className="hint">只在你漏傳 LINE 初評訊息時作為聯絡備援，不會公開顯示。</div>
       </div>
       <div className="field">
         <label htmlFor="projectType">這次想討論的是？</label>
