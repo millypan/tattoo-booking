@@ -134,7 +134,7 @@ main{max-width:1080px;margin:0 auto;padding:32px 24px 80px}
 
 form .field{margin-bottom:18px}
 label{display:block;font-size:13px;letter-spacing:.18em;color:var(--bone-dim);margin-bottom:7px}
-input[type=text],input[type=url],textarea,select{
+input[type=text],input[type=url],input[type=tel],textarea,select{
   width:100%;background:var(--ink-3);border:1px solid var(--line);color:var(--bone);
   padding:11px 13px;border-radius:var(--radius);font:inherit;font-size:15px;
 }
@@ -164,6 +164,8 @@ textarea{min-height:110px;resize:vertical}
 }
 .rulebox b{color:var(--bone)}
 .rulebox p{margin:6px 0}
+.claim-line-required h3{margin:4px 0 10px;color:var(--bone);font-size:20px;letter-spacing:.06em}
+.claim-line-required .consult-line-message{white-space:pre-line;margin:14px 0;color:var(--bone)!important}
 
 .booking-notice{
   margin:0 0 24px;padding:20px 22px;border:1px solid var(--line);border-top:6px solid #17395f;
