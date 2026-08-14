@@ -31,6 +31,8 @@ export default function ClaimForm({
   const [state, setState] = useState("form"); // form | sending | done
   const [error, setError] = useState("");
   const [doneMsg, setDoneMsg] = useState("");
+  const [lineMessage, setLineMessage] = useState("");
+  const [copied, setCopied] = useState(false);
   const [consentOpen, setConsentOpen] = useState(false);
   const formRef = useRef(null);
 
@@ -64,6 +66,7 @@ export default function ClaimForm({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: form.get("name"),
+        phone: form.get("phone"),
         spot: `${spot.region}${spot.note ? `（${spot.note}）` : ""}`,
         sizeChoice,
         applicationType,
@@ -78,11 +81,23 @@ export default function ClaimForm({
       setError("送出失敗，請再試一次，或直接透過 LINE 官方帳號聯絡。");
       return;
     }
-    const slotLabel = slots.find((s) => s.id === slotId)?.label || "";
+    const data = await res.json();
+    const slotLabel = slots.find((s) => s.id === slotId)?.label || "待米粒評估後安排";
+    const customerName = form.get("name");
     setDoneMsg(
-      `${form.get("name")}，你認領了「${workName}」${slotLabel ? `，時段：${slotLabel}` : ""}。`
+      `${customerName}，你認領了「${workName}」。`
     );
+    setLineMessage(`米粒你好，我是${customerName}。\n我剛剛認領了「${workName}」。\n選擇尺寸：${sizeChoice}\n預約時段：${slotLabel}\n認領編號：${data.claimCode}\n請幫我確認，謝謝！`);
     setState("done");
+  }
+
+  async function copyLineMessage() {
+    try {
+      await navigator.clipboard.writeText(lineMessage);
+      setCopied(true);
+    } catch {
+      setError("無法自動複製，請長按下方訊息後選擇複製。");
+    }
   }
 
   if (state === "done") {
@@ -96,18 +111,21 @@ export default function ClaimForm({
         {sizeChoice !== "最小建議尺寸" ? (
           <p>你選了「想放大」——放大的幅度與價格，米粒會在 LINE 上跟你確認報價。</p>
         ) : null}
-        <div className="rulebox">
-          <p><b>接下來一步：</b>加 LINE 官方帳號，跟米粒說你的稱呼。</p>
-          <p>她會親自看過你選的部位（和試貼照），跟你確認最適合的位置，確定沒問題後把轉帳資訊給你——請於下單當日支付總額 50% 作為定金。入帳後時段正式鎖定，並請於 6 個月內完成作品。</p>
-          <p>
-            {process.env.NEXT_PUBLIC_LINE_URL ? (
-              <a className="cta" href={process.env.NEXT_PUBLIC_LINE_URL} target="_blank" rel="noreferrer">加 LINE 官方帳號</a>
-            ) : (
-              <b>LINE 官方帳號連結（待補）</b>
-            )}
-          </p>
+        <div className="rulebox claim-line-required">
+          <p className="booking-notice-kicker">還差最後一步</p>
+          <h3 className="serif">請務必把這段訊息傳到官方 LINE</h3>
+          <p>網站無法直接辨識你的 LINE 身分。米粒收到這段訊息後，才能確認這張圖是由你認領。</p>
+          <p className="consult-line-message">{lineMessage}</p>
+          {error ? <p className="err">{error}</p> : null}
+          <div className="consult-actions">
+            <button type="button" className="cta" onClick={copyLineMessage}>{copied ? "已複製認領訊息 ✓" : "複製認領確認訊息"}</button>
+            {copied && process.env.NEXT_PUBLIC_LINE_URL ? (
+              <a className="cta ghost" href={process.env.NEXT_PUBLIC_LINE_URL} target="_blank" rel="noreferrer">前往官方 LINE</a>
+            ) : null}
+          </div>
+          <p className="hint">複製後請前往 LINE 對話，貼上並送出。手機號碼只作為漏傳訊息時的聯絡備援。</p>
         </div>
-        <Link className="cta ghost" href="/">回圖庫</Link>
+        {copied ? <Link className="back" href="/">稍後回圖庫</Link> : null}
       </div>
     );
   }
@@ -208,6 +226,11 @@ export default function ClaimForm({
       <div className="field">
         <label htmlFor="name">怎麼稱呼你</label>
         <input type="text" id="name" name="name" required maxLength={40} />
+      </div>
+      <div className="field">
+        <label htmlFor="phone">手機號碼</label>
+        <input type="tel" id="phone" name="phone" required inputMode="tel" autoComplete="tel" maxLength={20} placeholder="例：0912 345 678" />
+        <div className="hint">只在你漏傳 LINE 認領訊息時作為聯絡備援，不會公開顯示。</div>
       </div>
       <div className="field">
         <label>尺寸</label>
