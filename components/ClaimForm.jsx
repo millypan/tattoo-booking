@@ -19,7 +19,6 @@ export default function ClaimForm({
   imageCount = 1,
   price,
   minimumSize,
-  recommendedSpot,
 }) {
   const [slotId, setSlotId] = useState(null);
   const [spot, setSpot] = useState(null);
@@ -196,6 +195,15 @@ export default function ClaimForm({
           onClose={() => setTryOnOpen(false)}
         />
       ) : null}
+      <section className="claim-work-summary" aria-labelledby="claim-work-summary-title">
+        <p className="booking-notice-kicker">這張圖的資訊</p>
+        <h3 id="claim-work-summary-title" className="serif">試貼後，再看看適合的尺寸</h3>
+        <ul className="facts">
+          <li><span>價格</span><b>{price != null ? `NT$ ${price.toLocaleString()}` : "詢價"}</b></li>
+          <li><span>建議尺寸</span><b>{minimumSize || "—"}</b></li>
+        </ul>
+        <p className="hint">價格以建議尺寸與一般部位為基準；特殊部位、放大尺寸或需要調整設計時，米粒會再和你確認報價。</p>
+      </section>
       <div className="claim-form-divider" aria-hidden="true" />
       <div className="field">
         <label htmlFor="name">怎麼稱呼你</label>
@@ -245,16 +253,6 @@ export default function ClaimForm({
       </div> : (
         <div className="field"><p className="hint">改蓋案件會先由米粒評估是否適合；確認可行後，再一起安排刺青時間。</p></div>
       )}
-      <section className="claim-work-summary" aria-labelledby="claim-work-summary-title">
-        <p className="booking-notice-kicker">送出前，再確認一次</p>
-        <h3 id="claim-work-summary-title" className="serif">這張圖的刺青建議</h3>
-        <ul className="facts">
-          <li><span>價格</span><b>{price != null ? `NT$ ${price.toLocaleString()}` : "詢價"}</b></li>
-          <li><span>最小建議尺寸</span><b>{minimumSize || "—"}</b></li>
-          <li><span>建議部位</span><b>{recommendedSpot || "—"}</b></li>
-        </ul>
-        <p className="hint">價格以最小建議尺寸與一般部位為基準；特殊部位、放大尺寸或需要調整設計時，米粒會再和你確認報價。</p>
-      </section>
       {error ? <p className="err">{error}</p> : null}
       <button className="cta" type="submit" disabled={state === "sending"}>
         {state === "sending" ? "送出中…" : "預約這張圖"}
