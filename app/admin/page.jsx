@@ -544,7 +544,9 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
             {batchSaving ? "批量修改中…" : `批量修改 ${batchMatches.length} 個時段`}
           </button>
           {batchResult ? (
-            <p className="batch-summary">已修改 {batchResult.updated?.length || 0} 個；跳過 {batchResult.skipped?.length || 0} 個。</p>
+            <p className="batch-summary">
+              已修改 {batchResult.updated?.length || 0} 個；新時間已存在、因此關閉舊時段 {batchResult.replaced?.length || 0} 個；跳過 {batchResult.skipped?.length || 0} 個。
+            </p>
           ) : null}
         </div>
 
