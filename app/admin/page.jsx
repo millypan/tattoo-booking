@@ -220,6 +220,13 @@ function AdminStyles() {
       .day-action{background:none;border:1px solid var(--line);color:var(--bone);padding:8px 11px;border-radius:var(--radius);white-space:nowrap}
       .day-action.save{border-color:var(--jade)}
       .day-action.close:hover{border-color:var(--cinnabar);color:var(--cinnabar)}
+      .batch-editor{max-width:780px;margin:18px 0 22px;border:1px solid var(--jade);padding:14px}
+      .batch-editor h4{margin:0 0 6px;font-size:14px;letter-spacing:.08em}
+      .batch-editor .hint{margin:0 0 12px}
+      .batch-row{display:grid;grid-template-columns:110px minmax(230px,1fr) auto minmax(230px,1fr);gap:8px;align-items:center}
+      .batch-row>select{margin:0}
+      .batch-arrow{text-align:center;color:var(--bone-dim)}
+      .batch-summary{font-size:13px;color:var(--bone-dim);margin:12px 0}
 
       @media(max-width:640px){
         .schedule-row{grid-template-columns:1fr auto}
@@ -232,6 +239,8 @@ function AdminStyles() {
         .day-edit-row{grid-template-columns:1fr 1fr}
         .day-edit-row>.time-selector{grid-column:1/-1}
         .day-edit-row select{grid-column:1/-1}
+        .batch-row{grid-template-columns:1fr}
+        .batch-arrow{text-align:left}
       }
 
       .preview-list{list-style:none;padding:0;margin:14px 0;border-top:1px solid var(--line)}
@@ -280,6 +289,11 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
   const [closingId, setClosingId] = useState(null);
   const [savingId, setSavingId] = useState(null);
   const [slotEdits, setSlotEdits] = useState({});
+  const [batchType, setBatchType] = useState("刺青");
+  const [batchFromTime, setBatchFromTime] = useState("11:00");
+  const [batchToTime, setBatchToTime] = useState("14:00");
+  const [batchSaving, setBatchSaving] = useState(false);
+  const [batchResult, setBatchResult] = useState(null);
 
   const loadFutureSlots = useCallback(async () => {
     setSlotsError("");
@@ -328,6 +342,38 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
     }, new Map()),
     [futureSlots]
   );
+
+  const batchMatches = useMemo(() => {
+    const matches = [];
+    for (const date of [...selectedDates].sort()) {
+      for (const slot of slotsByDate.get(date) || []) {
+        if (slot.status === "開放" && slot.type === batchType && slot.displayTime === batchFromTime) {
+          matches.push({ ...slot, date });
+        }
+      }
+    }
+    return matches;
+  }, [selectedDates, slotsByDate, batchType, batchFromTime]);
+
+  async function submitBatchUpdate() {
+    if (batchMatches.length === 0 || batchFromTime === batchToTime) return;
+    if (!window.confirm(`確定把選取日期中的 ${batchMatches.length} 個「${batchType} ${batchFromTime}」改為 ${batchToTime}？`)) return;
+    setBatchSaving(true); setSlotsError(""); setBatchResult(null);
+    try {
+      const res = await apiFetch("/api/admin/slots", {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "batch-update",
+          updates: batchMatches.map((slot) => ({ id: slot.id, date: slot.date, time: batchToTime, type: batchType })),
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || "批量修改失敗");
+      setBatchResult(body);
+      await loadFutureSlots();
+    } catch (e) { if (e.message !== "unauthorized") setSlotsError(e.message); }
+    setBatchSaving(false);
+  }
 
   // 即時預覽：先設定好的整組排程 × 已點選日期。
   const preview = useMemo(() => {
@@ -478,6 +524,28 @@ function AdminPanel({ apiFetch, adminKey, onAdminKeyChange }) {
             })}
           </div>
           <p className="calendar-note">可一次選多天；選好後，上面的整組諮詢／刺青排程會複製到每一個日期。</p>
+        </div>
+
+        <div className="batch-editor">
+          <h4>批量修改已建立時段</h4>
+          <p className="hint">先在上方月曆選取多個日期，再設定要把哪些時段一起改掉。只會修改仍為「開放」的空時段。</p>
+          <div className="batch-row">
+            <select aria-label="要修改的類型" value={batchType} onChange={(e) => setBatchType(e.target.value)}>
+              <option>刺青</option><option>諮詢</option>
+            </select>
+            <TimeSelector value={batchFromTime} onChange={setBatchFromTime} />
+            <span className="batch-arrow">改成 →</span>
+            <TimeSelector value={batchToTime} onChange={setBatchToTime} />
+          </div>
+          <p className="batch-summary">
+            已選 {selectedDates.size} 天；找到 {batchMatches.length} 個符合的「{batchType} {batchFromTime}」時段。
+          </p>
+          <button className="cta" type="button" disabled={batchSaving || batchMatches.length === 0 || batchFromTime === batchToTime} onClick={submitBatchUpdate}>
+            {batchSaving ? "批量修改中…" : `批量修改 ${batchMatches.length} 個時段`}
+          </button>
+          {batchResult ? (
+            <p className="batch-summary">已修改 {batchResult.updated?.length || 0} 個；跳過 {batchResult.skipped?.length || 0} 個。</p>
+          ) : null}
         </div>
 
         {activeDate && (slotsByDate.get(activeDate) || []).length > 0 ? (
