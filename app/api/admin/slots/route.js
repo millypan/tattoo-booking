@@ -1,4 +1,4 @@
-import { getFutureSlots, createSlots, closeSlot, updateAdminSlot, getAdminPassword } from "../../../../lib/notion";
+import { getFutureSlots, createSlots, closeSlot, updateAdminSlot, batchUpdateAdminSlots, getAdminPassword } from "../../../../lib/notion";
 
 // 批次建立可能要逐筆呼叫 Notion API（見 lib/notion.js createSlots），
 // 上限拉到 60 秒讓合法批次（≤60 筆，見下方 MAX_CREATE_SLOTS）有足夠時間跑完。
@@ -7,6 +7,7 @@ export const maxDuration = 60;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const MAX_CREATE_SLOTS = 60;
+const MAX_BATCH_UPDATES = 60;
 
 // 所有方法都先驗證管理密鑰；密碼現在存在 Notion「系統設定」資料庫（getAdminPassword 內建
 // ADMIN_SECRET fallback）。password 為 falsy（null／空字串）時一律視為未授權，
@@ -60,7 +61,18 @@ export async function POST(request) {
 export async function PATCH(request) {
   if (!(await isAuthed(request))) return unauthorized();
   try {
-    const { id, action, date, time, type } = await request.json();
+    const { id, action, date, time, type, updates } = await request.json();
+    if (action === "batch-update") {
+      if (!Array.isArray(updates) || updates.length === 0 || updates.length > MAX_BATCH_UPDATES) {
+        return Response.json({ error: "批量修改需包含 1～60 個時段" }, { status: 400 });
+      }
+      for (const item of updates) {
+        if (!item?.id || !DATE_RE.test(item.date) || !TIME_RE.test(item.time) || !["刺青", "諮詢"].includes(item.type)) {
+          return Response.json({ error: "批量時段格式錯誤" }, { status: 400 });
+        }
+      }
+      return Response.json(await batchUpdateAdminSlots({ updates }));
+    }
     if (!id) return Response.json({ error: "缺少 id" }, { status: 400 });
     if (action === "update") {
       if (!DATE_RE.test(date) || !TIME_RE.test(time) || !["刺青", "諮詢"].includes(type)) {
