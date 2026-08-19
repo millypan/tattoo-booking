@@ -1,4 +1,4 @@
-import { syncMissingMinimalSchedules } from "../../../../lib/notion";
+import { syncMissingMinimalSchedules, syncTattooTimes } from "../../../../lib/notion";
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +10,9 @@ export async function POST(request) {
   }
 
   try {
-    const created = await syncMissingMinimalSchedules();
-    return Response.json({ ok: true, created });
+    const minimalCreated = await syncMissingMinimalSchedules();
+    const tattooTimes = await syncTattooTimes();
+    return Response.json({ ok: true, minimalCreated, tattooTimes });
   } catch (error) {
     console.error("minimal schedule sync failed", error);
     return Response.json({ error: "Sync failed" }, { status: 500 });
