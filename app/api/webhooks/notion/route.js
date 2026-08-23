@@ -20,11 +20,6 @@ export async function POST(request) {
     return Response.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  if (event.verification_token) {
-    console.log("NOTION_WEBHOOK_VERIFICATION_TOKEN", event.verification_token);
-    return Response.json({ ok: true });
-  }
-
   const verificationToken = process.env.NOTION_WEBHOOK_VERIFICATION_TOKEN;
   const signature = request.headers.get("x-notion-signature");
   if (!validSignature(body, signature, verificationToken)) {
