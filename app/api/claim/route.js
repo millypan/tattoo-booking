@@ -49,6 +49,9 @@ export async function POST(req) {
     return Response.json({ ok: true, claimCode });
   } catch (e) {
     console.error("claim error", e);
+    if (e.message === "SLOT_UNAVAILABLE") {
+      return Response.json({ error: "這個時段目前無法預約，請重新整理後再選擇" }, { status: 409 });
+    }
     return Response.json({ error: "server" }, { status: 500 });
   }
 }
