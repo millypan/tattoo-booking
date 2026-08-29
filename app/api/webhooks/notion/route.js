@@ -30,6 +30,13 @@ export async function POST(request) {
     return Response.json({ ok: true, ignored: true });
   }
 
+  // 我們自己建立／更新極簡排程時，Notion 也會再送一個 webhook。
+  // 若繼續處理 bot 事件，極簡排程的關聯欄位會反向更新預約訂單，形成
+  // webhook → 寫入 Notion → webhook 的循環，最後讓 Notion 因高錯誤率暫停訂閱。
+  if (event.authors?.some((author) => author?.type === "bot")) {
+    return Response.json({ ok: true, ignored: "bot_authored_event" });
+  }
+
   try {
     const result = await syncBookingMinimalSchedules(event.entity.id);
     return Response.json({ ok: true, result });
