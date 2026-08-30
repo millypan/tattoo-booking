@@ -10,6 +10,7 @@ const STORAGE_KEY = "mly_admin_key";
 const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const MAX_CREATE_SLOTS = 60; // 對應 app/api/admin/slots/route.js 的 MAX_CREATE_SLOTS，超過就擋在預覽階段
 const WEEK_LABELS = ["日", "一", "二", "三", "四", "五", "六"];
+const DAY_HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
 
 function monthKey(dateString) {
   return dateString.slice(0, 7);
@@ -35,20 +36,15 @@ function monthDays(key) {
 
 function TimeSelector({ value, onChange }) {
   const [hour24, minute = "00"] = (value || "10:00").split(":");
-  const hour = Number(hour24);
-  const period = hour >= 12 ? "下午" : "上午";
-  const hour12 = hour % 12 || 12;
-  function change(nextPeriod, nextHour, nextMinute) {
-    let next24 = Number(nextHour) % 12;
-    if (nextPeriod === "下午") next24 += 12;
-    onChange(`${String(next24).padStart(2, "0")}:${nextMinute}`);
+  const normalizedHour = DAY_HOURS.includes(hour24) ? hour24 : "10";
+  function change(nextHour, nextMinute) {
+    onChange(`${nextHour}:${nextMinute}`);
   }
   return (
     <div className="time-selector">
-      <select aria-label="上午或下午" value={period} onChange={(e) => change(e.target.value, hour12, minute)}><option>上午</option><option>下午</option></select>
-      <select aria-label="小時" value={hour12} onChange={(e) => change(period, e.target.value, minute)}>{Array.from({ length: 12 }, (_, i) => <option key={i + 1}>{i + 1}</option>)}</select>
+      <select aria-label="小時（24 小時制）" value={normalizedHour} onChange={(e) => change(e.target.value, minute)}>{DAY_HOURS.map((hour) => <option key={hour} value={hour}>{hour}</option>)}</select>
       <span>：</span>
-      <select aria-label="分鐘" value={minute === "30" ? "30" : "00"} onChange={(e) => change(period, hour12, e.target.value)}><option>00</option><option>30</option></select>
+      <select aria-label="分鐘" value={minute === "30" ? "30" : "00"} onChange={(e) => change(normalizedHour, e.target.value)}><option>00</option><option>30</option></select>
     </div>
   );
 }
@@ -188,7 +184,7 @@ function AdminStyles() {
       .schedule-row{display:grid;grid-template-columns:120px 1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
       .schedule-row:last-of-type{border-bottom:none}
       .schedule-row input,.schedule-row select{margin:0;min-width:0}
-      .time-selector{display:grid;grid-template-columns:86px 60px 10px 60px;gap:5px;align-items:center}
+      .time-selector{display:grid;grid-template-columns:60px 10px 60px;gap:5px;align-items:center}
       .time-selector select{margin:0;padding-left:8px;padding-right:8px}
       .schedule-remove{background:none;border:1px solid var(--line);color:var(--bone-dim);padding:8px 10px;border-radius:var(--radius)}
       .schedule-add{margin-top:10px;background:none;border:1px solid var(--jade);color:var(--bone);padding:8px 13px;border-radius:var(--radius)}
@@ -232,7 +228,7 @@ function AdminStyles() {
         .schedule-row{grid-template-columns:1fr auto}
         .schedule-row>select{grid-column:1/-1}
         .schedule-row>.time-selector{grid-column:1/2}
-        .time-selector{grid-template-columns:76px 54px 8px 54px}
+        .time-selector{grid-template-columns:54px 8px 54px}
         .month-picker{padding:10px;margin-left:-8px;margin-right:-8px}
         .calendar-grid{grid-template-columns:repeat(7,minmax(68px,1fr))}
         .calendar-day,.calendar-empty{min-height:82px}
