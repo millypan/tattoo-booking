@@ -1,7 +1,9 @@
 import { getWorks, getSeriesList } from "../lib/notion";
 import Gallery from "../components/Gallery";
 
-export const revalidate = 60;
+// 首頁同時是極簡排程的最後一道補漏入口；不可被整頁快取，否則訪客打開首頁時
+// 看似有請求、實際卻不會重新執行 getWorks() 內的對帳。
+export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const [works, seriesList] = await Promise.all([getWorks(), getSeriesList()]);
