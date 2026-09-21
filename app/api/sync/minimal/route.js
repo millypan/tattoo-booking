@@ -10,9 +10,9 @@ export async function POST(request) {
   }
 
   try {
-    const minimalCreated = await syncMissingMinimalSchedules();
+    const minimalSynced = await syncMissingMinimalSchedules({ reconcile: true });
     const tattooTimes = await syncTattooTimes();
-    return Response.json({ ok: true, minimalCreated, tattooTimes });
+    return Response.json({ ok: true, minimalSynced, tattooTimes });
   } catch (error) {
     console.error("minimal schedule sync failed", error);
     return Response.json({ error: "Sync failed" }, { status: 500 });
