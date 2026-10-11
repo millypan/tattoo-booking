@@ -11,7 +11,7 @@ function booking(extra = {}) {
     '狀態': { select: { name: '時間已確認' } }, ...extra,
   } };
 }
-function mock(t, target, existing = null) {
+function mock(t, target, existing = null, related = null) {
   const calls = [];
   const original = globalThis.fetch;
   globalThis.fetch = async (url, options) => {
@@ -20,6 +20,7 @@ function mock(t, target, existing = null) {
     calls.push({ path, method: options.method, body });
     let result;
     if (path === '/pages/target' && options.method === 'GET') result = target;
+    else if (related && path === `/pages/${related.id}` && options.method === 'GET') result = related;
     else if (path === '/databases/bookings') result = { properties: { '極簡排程': { relation: { database_id: 'minimal' } } } };
     else if (path === '/databases/bookings/query') result = { results: [target] };
     else if (path === '/databases/slots/query') result = { results: [] };
@@ -84,4 +85,26 @@ test('scheduled tattoo sync retains the full booking query', async t => {
   const calls = mock(t, booking());
   await syncTattooTimes();
   assert.ok(calls.some(c => c.path === '/databases/bookings/query'));
+  const filter = calls.find(c => c.path === '/databases/bookings/query').body.filter;
+  assert.equal(filter.and.some(c => c.property === '類型'), false);
+});
+
+test('claim bookings with a tattoo time use the same targeted sync path', async t => {
+  const item = booking({ '類型': { select: { name: '認領圖' } }, '刺青時間': { date: { start: date } } });
+  const calls = mock(t, item);
+  await syncTattooTimes(item);
+  assert.ok(writes(calls).some(c => c.body.properties?.['類型']?.select?.name === '刺青'));
+});
+
+test('an incomplete linked schedule is repaired instead of duplicated', async t => {
+  const related = { id: 'incomplete', properties: { '時間': { date: { start: date } }, '類型': { select: null } } };
+  const item = booking({
+    '類型': { select: { name: '認領圖' } },
+    '刺青時間': { date: { start: date } },
+    '極簡排程': { relation: [{ id: related.id }] },
+  });
+  const calls = mock(t, item, null, related);
+  await syncTattooTimes(item);
+  assert.ok(writes(calls).some(c => c.path === '/pages/incomplete' && c.method === 'PATCH'));
+  assert.equal(writes(calls).some(c => c.path === '/pages' && c.method === 'POST' && c.body.parent?.database_id === 'minimal'), false);
 });
